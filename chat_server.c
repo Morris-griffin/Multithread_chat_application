@@ -54,11 +54,11 @@ int main(int argc, char *argv[])
             strcpy(server_response, "Hi, the server has received: ");
             strcat(server_response, client_request);
             
-            strcat(server_response, '\n');
+            strcat(server_response, "\n");
             //split the request by $ sign 
 
-            *request_type = strtok(client_request, '$');
-            *request_content = strtok(NULL, '$');
+            *request_type = strtok(client_request, "$");
+            *request_content = strtok(NULL, "$");
 
             //if client request is connect to chat with given name
             if (strncmp(request_type, "conn" , 4) == 0 ){
