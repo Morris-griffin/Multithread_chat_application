@@ -9,11 +9,11 @@
 typedef struct Client {
     char username[MAX_USERNAME_LEN];
     struct sockaddr_in addr;// contains IP + port
-    Client* next;  
+    struct Client* next;  
 }Client;
 char isconn[] = "conn";
-char *request_type[10];
-char *request_content [BUFFER_SIZE];
+char *request_type;
+char *request_content;
 int main(int argc, char *argv[])
 {
     Client clients[Max_clients];
@@ -57,8 +57,8 @@ int main(int argc, char *argv[])
             strcat(server_response, "\n");
             //split the request by $ sign 
 
-            *request_type = strtok(client_request, "$");
-            *request_content = strtok(NULL, "$");
+            request_type = strtok(client_request, "$");
+            request_content = strtok(NULL, "$");
 
             //if client request is connect to chat with given name
             if (strncmp(request_type, "conn" , 4) == 0 ){
