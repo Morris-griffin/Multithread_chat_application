@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include "udp.h"
 
@@ -11,7 +10,7 @@ int main(int argc, char *argv[])
     // binding it to all IP interfaces of this machine,
     // and port number CLIENT_PORT.
     // (See details of the function in udp.h)
-    int sd = udp_socket_open(CLIENT_PORT);
+    int sd = udp_socket_open(0);
 
     // Variable to store the server's IP address and port
     // (i.e. the server we are trying to contact).
@@ -31,8 +30,7 @@ int main(int argc, char *argv[])
     // Storage for request and response messages
     char client_request[BUFFER_SIZE], server_response[BUFFER_SIZE];
 
-    // Demo code (remove later)
-    strcpy(client_request, "Dummy Request");
+    fgets(client_request, BUFFER_SIZE, stdin);
 
     // This function writes to the server (sends request)
     // through the socket at sd.
@@ -51,6 +49,7 @@ int main(int argc, char *argv[])
         // Demo code (remove later)
         printf("server_response: %s", server_response);
     }
+    
 
     return 0;
 }
