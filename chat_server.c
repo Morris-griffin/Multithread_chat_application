@@ -65,6 +65,7 @@ int main(int argc, char *argv[])
             if (strcmp(request_type, client_request) == 0 ){
                 printf("Incorrect syntax\n");
                 strcat(server_response, "Incorrect input syntax");
+                strcat(server_response, "\n");
             }
             else if (strncmp(request_type, "conn" , 4) == 0 ){
                     if (num_clients < Max_clients){
