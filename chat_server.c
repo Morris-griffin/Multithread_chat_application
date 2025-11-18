@@ -14,6 +14,7 @@ typedef struct Client {
 char isconn[] = "conn";
 char *request_type;
 char *request_content;
+int valid_input = 0 ;
 int main(int argc, char *argv[])
 {
     Client clients[Max_clients];
@@ -56,13 +57,15 @@ int main(int argc, char *argv[])
             
             strcat(server_response, "\n");
             //split the request by $ sign 
-
+            if (strchr(client_request, '$')!= 0 ){
+                valid_input = 1;
+            }
             request_type = strtok(client_request, "$");
             
             request_content = strtok(NULL, "$");
 
             //if client request is connect to chat with given name
-            if (strcmp(request_type, client_request) == 0 ){
+            if (valid_input = 0){
                 printf("Incorrect syntax\n");
                 strcat(server_response, "Incorrect input syntax");
                 strcat(server_response, "\n");
@@ -81,7 +84,7 @@ int main(int argc, char *argv[])
                 //broadcast to all clients
             }
             else if (strncmp(request_type, "disconn" ,7) == 0){
-                // remove the client from linkes list with a confirmation message
+                strcpy(server_response, "kill");
             }
             else if (strncmp(request_type, "mute" , 4) == 0){
                 // block a client from this client

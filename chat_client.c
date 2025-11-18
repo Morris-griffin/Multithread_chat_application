@@ -2,10 +2,11 @@
 #include "udp.h"
 
 #define CLIENT_PORT 10000
-
+#define Max_name_length 30
 // client code
 int main(int argc, char *argv[])
 {
+    int status = 1 ;
     // This function opens a UDP socket,
     // binding it to all IP interfaces of this machine,
     // and port number CLIENT_PORT.
@@ -29,27 +30,40 @@ int main(int argc, char *argv[])
 
     // Storage for request and response messages
     char client_request[BUFFER_SIZE], server_response[BUFFER_SIZE];
-
-    fgets(client_request, BUFFER_SIZE, stdin);
-
-    // This function writes to the server (sends request)
-    // through the socket at sd.
-    // (See details of the function in udp.h)
-    rc = udp_socket_write(sd, &server_addr, client_request, BUFFER_SIZE);
-
-    if (rc > 0)
-    {
-        // This function reads the response from the server
-        // through the socket at sd.
-        // In our case, responder_addr will simply be
-        // the same as server_addr.
-        // (See details of the function in udp.h)
-        int rc = udp_socket_read(sd, &responder_addr, server_response, BUFFER_SIZE);
-
-        // Demo code (remove later)
-        printf("server_response: %s", server_response);
-    }
+    
     
 
+    // client information
+    char client_name[Max_name_length];
+
+    while (status == 1){
+        if (rc > 0 ){
+            if (strcmp(client_name, "" ) != 0 ){
+                printf("Hello %s what Message do you want to send to the server \n", client_name);
+
+            }
+
+        };
+
+        fgets(client_request, BUFFER_SIZE, stdin);
+
+        // This function writes to the server (sends request) through the socket at sd.
+        rc = udp_socket_write(sd, &server_addr, client_request, BUFFER_SIZE);
+        if (rc > 0)
+        {
+            
+            // This function reads the response from the server 
+            // responder_addr will simply be the same as server_addr.
+            int rc = udp_socket_read(sd, &responder_addr, server_response, BUFFER_SIZE);
+
+            if (strcmp(server_response, "kill") ==  0 ){
+                return 0;
+            }
+
+            // Demo code (remove later)
+            printf("server_response: %s", server_response);
+        }
+    
+    }
     return 0;
 }
