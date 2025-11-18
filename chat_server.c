@@ -63,7 +63,8 @@ int main(int argc, char *argv[])
 
             //if client request is connect to chat with given name
             if (strcmp(request_type, client_request) == 0 ){
-                printf("Incorrect syntax");
+                printf("Incorrect syntax\n");
+                strcat(server_response, "Incorrect input syntax");
             }
             else if (strncmp(request_type, "conn" , 4) == 0 ){
                     if (num_clients < Max_clients){
