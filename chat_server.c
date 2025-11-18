@@ -58,20 +58,42 @@ int main(int argc, char *argv[])
             //split the request by $ sign 
 
             request_type = strtok(client_request, "$");
+            
             request_content = strtok(NULL, "$");
 
             //if client request is connect to chat with given name
-            if (strncmp(request_type, "conn" , 4) == 0 ){
+            if (strcmp(request_type, client_request) == 0 ){
+                printf("Incorrect syntax");
+            }
+            else if (strncmp(request_type, "conn" , 4) == 0 ){
                     if (num_clients < Max_clients){
                         num_clients += 1;
                         Client *c = &clients[num_clients];
                         strncpy(c->username, request_content, MAX_USERNAME_LEN);
                         c->username[MAX_USERNAME_LEN - 1] = '\0';
-                        c->addr = client_address;}
+                        c->addr = client_address;
+                        printf("%s", c->username );}
                     else {printf("Max Clients reached");};
-            };
-            
-            
+            }
+            else if (strncmp(request_type, "say" , 3) == 0){
+                //broadcast to all clients
+            }
+            else if (strncmp(request_type, "disconn" ,7) == 0){
+                // remove the client from linkes list with a confirmation message
+            }
+            else if (strncmp(request_type, "mute" , 4) == 0){
+                // block a client from this client
+            }
+            else if (strncmp(request_type, "unmute" , 6) == 0){
+                // remove the block of this client
+            }
+            else if (strncmp(request_type, "rename" , 6) == 0){
+                // change the clients name 
+            }
+            else if (strncmp(request_type, "kick" , 4) == 0){
+                // check if admin and then remove specified chlient 
+            }
+        
 
             // This function writes back to the incoming client,
             // whose address is now available in client_address, 
