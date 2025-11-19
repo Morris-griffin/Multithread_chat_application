@@ -9,7 +9,7 @@ char *request_content;
 int valid_input = 0 ;
 int main(int argc, char *argv[])
 {
-    Client clients[Max_clients];
+    client* clients_head = NULL;
     int num_clients = 0;
     // This function opens a UDP socket,
     // binding it to all IP interfaces of this machine,
@@ -28,6 +28,8 @@ int main(int argc, char *argv[])
 
         // Demo code (remove later)
         printf("Server is listening on port %d\n", SERVER_PORT);
+        printf("client list\n");
+        print_all_connected(clients_head);
 
         // Variable to store incoming client's IP address and port
         struct sockaddr_in client_address;
@@ -65,11 +67,8 @@ int main(int argc, char *argv[])
             else if (strncmp(request_type, "conn" , 4) == 0 ){
                     if (num_clients < Max_clients){
                         num_clients += 1;
-                        Client *c = &clients[num_clients];
-                        strncpy(c->username, request_content, MAX_USERNAME_LEN);
-                        c->username[MAX_USERNAME_LEN - 1] = '\0';
-                        c->addr = client_address;
-                        printf("%s", c->username );}
+                        clients_head = add_c(request_content,client_address,clients_head);
+                        printf("%s", request_content);}
                     else {printf("Max Clients reached");};
             }
             else if (strncmp(request_type, "say" , 3) == 0){

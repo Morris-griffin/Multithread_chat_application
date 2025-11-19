@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
     while (status == 1){
         if (rc > 0 ){
             if (strcmp(client_name, "" ) != 0 ){
-                printf("Hello %s what Message do you want to send to the server \n", client_name);
+                //printf("Hello %s what Message do you want to send to the server \n", client_name);
 
             }
 

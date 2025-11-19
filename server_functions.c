@@ -16,7 +16,7 @@ client* add_c (char name[], struct sockaddr_in client_address, client* last){
 
 }
 
-client* find_c(client* head, char name[]){
+client* find_name(client* head, char name[]){
     if(head == NULL){
         return NULL;
     }
@@ -27,6 +27,21 @@ client* find_c(client* head, char name[]){
 
     else{
         return find_c(head->next, name);
+    }
+}
+
+client* find_socket(client* head, struct sockaddr_in addr){
+    if(head == NULL){
+        return NULL;
+    }
+
+    if(head->addr.sin_addr.s_addr == addr.sin_addr.s_addr &&
+            head->addr.sin_port == addr.sin_port){
+        return head;
+    }
+
+    else{
+        return find_c(head->next, addr);
     }
 }
 
@@ -65,5 +80,12 @@ void de_all_list(client* head){
     if(head != NULL){
         de_all_list(head->next);
         free(head);
+    }
+}
+
+void print_all_connected(client* head){
+    while(head != NULL){
+        printf(head -> username, SERVER_PORT);
+        head = head -> next;
     }
 }
