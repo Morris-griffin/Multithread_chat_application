@@ -1,16 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "udp.h"
+#include "server_functions.h"
 
-//need a data type that ties users and there ip addresses 
-#define MAX_USERNAME_LEN 32
-#define Max_clients 15
-
-typedef struct Client {
-    char username[MAX_USERNAME_LEN];
-    struct sockaddr_in addr;// contains IP + port
-    struct Client* next;  
-}Client;
 char isconn[] = "conn";
 char *request_type;
 char *request_content;
