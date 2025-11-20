@@ -4,6 +4,24 @@
 #define CLIENT_PORT 10000
 #define Max_name_length 30
 // client code
+
+void* client_listen(void* arg){
+    int port = *(int*)arg;
+
+    char buffer[BUFFER_SIZE];
+
+    struct sockaddr_in tmp;
+
+    while(1){
+        int rc = udp_socket_read(port, &tmp, buffer, BUFFER_SIZE);
+        if (rc > 0){
+            printf("%s",buffer);
+        }
+    }
+    return NULL;
+}
+
+
 int main(int argc, char *argv[])
 {
     int status = 1 ;
@@ -36,7 +54,12 @@ int main(int argc, char *argv[])
     // client information
     char client_name[Max_name_length];
 
-    int x = pthread_create()
+    pthread_t listener_thread;
+
+    int x = pthread_create(&listener_thread,NULL,client_listen,(void*)&sd);
+    if(x != 0){
+        printf("listener thread creation failed\n");
+    }
 
     while (status == 1){
         if (rc > 0 ){
@@ -54,16 +77,6 @@ int main(int argc, char *argv[])
         if (rc > 0)
         {
             
-            // This function reads the response from the server 
-            // responder_addr will simply be the same as server_addr.
-            int rc = udp_socket_read(sd, &responder_addr, server_response, BUFFER_SIZE);
-
-            if (strcmp(server_response, "kill") ==  0 ){
-                return 0;
-            }
-
-            // Demo code (remove later)
-            printf("server_response: %s", server_response);
         }
     
     }
@@ -71,17 +84,3 @@ int main(int argc, char *argv[])
 }
 
 
-void* listen(void* arg){
-    int port = *(int*)arg;
-
-    char buffer[BUFFER_SIZE];
-
-    struct sockaddr_in tmp;
-
-    while(1){
-        int rc = udp_socket_read(port, &tmp, buffer, BUFFER_SIZE);
-        if (rc > 0){
-            printf("%s",buffer);
-        }
-    }
-}

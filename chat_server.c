@@ -39,6 +39,7 @@ int main(int argc, char *argv[])
         // the socket at sd.
         // (See details of the function in udp.h)
         int rc = udp_socket_read(sd, &client_address, client_request, BUFFER_SIZE);
+        client_request[strlen(client_request)-1] = '\0';
        
         
         printf("port %d\n", client_address.sin_port);
@@ -61,7 +62,7 @@ int main(int argc, char *argv[])
 
             //if client request is connect to chat with given name
             if(requesting_client_node == NULL){
-                if (strncmp(request_type, "conn" , 4) == 0 ){
+                if (strcmp(request_type, "conn") == 0 ){
                     if (num_clients < Max_clients){
                         if(find_name(clients_head,request_content)==NULL){
                             num_clients += 1;
@@ -84,12 +85,12 @@ int main(int argc, char *argv[])
             }
             else{
 
-                if(strncmp(request_type, "conn" , 4) == 0 ){
+                if(strcmp(request_type, "conn") == 0 ){
                     strcpy(server_response,"you are already connected as ");
                     strcat(server_response, requesting_client_node->username);
                 }
 
-                else if (strncmp(request_type, "say" , 3) == 0){
+                else if (strcmp(request_type, "say") == 0){
                     //broadcast to all clients
                     client* c = clients_head;
                     int i = 0;
@@ -98,7 +99,7 @@ int main(int argc, char *argv[])
                     strcat(server_response, request_content);
                     strcat(server_response,"\n");
                     while(c != NULL){
-                        if(find_name_in_blocked(c->block_list,requesting_client_node->username) == NULL){
+                        if(find_name_in_blocked(c->block_list,requesting_client_node->username) == NULL && c!=requesting_client_node){
                             printf("broadcast #%d to %s:%d\n",
                                 i,
                                 inet_ntoa(c->addr.sin_addr),
@@ -114,11 +115,11 @@ int main(int argc, char *argv[])
                         i++;
                     }
                 }
-                else if (strncmp(request_type, "disconn" ,7) == 0){
+                else if (strcmp(request_type, "disconn") == 0){
                     strcpy(server_response, "session finished - see you soon!\n");
                     clients_head = remove_c(requesting_client_node,clients_head);
                 }
-                else if (strncmp(request_type, "mute" , 4) == 0){
+                else if (strcmp(request_type, "mute") == 0){
                     // block a client from this client
                     block_node* tmp = block_user(clients_head,requesting_client_node->block_list,request_content);
                     if(tmp == NULL){
@@ -135,7 +136,7 @@ int main(int argc, char *argv[])
 
                     }
                 }
-                else if (strncmp(request_type, "unmute" , 6) == 0){
+                else if (strcmp(request_type, "unmute") == 0){
                     // remove the block of this client
                     block_node *unmute_user = find_name_in_blocked(requesting_client_node->block_list,request_content);
                     if(unmute_user==NULL){
@@ -150,8 +151,42 @@ int main(int argc, char *argv[])
                         requesting_client_node->block_list = remove_b(unmute_user,requesting_client_node->block_list);
                     }
                 }
-                else if (strncmp(request_type, "rename" , 6) == 0){
+                else if (strcmp(request_type, "rename") == 0){
                     if(find_name(clients_head,request_content)==NULL){
+
+
+                        client* tmp = clients_head;
+
+                        block_node* blocked;
+
+                        while(tmp != NULL){
+                            blocked = find_name_in_blocked(tmp->block_list,requesting_client_node->username);
+
+                            if(blocked != NULL){
+                                strcpy(blocked -> username, request_content);
+                                strcpy(server_response, requesting_client_node->username);
+                                strcat(server_response,"who is on your blocked list, has now changed name to ");
+                                strcat(server_response,request_content);
+                                strcat(server_response,"they will remain blocked\n");
+
+                                rc = udp_socket_write(sd, &(tmp->addr), server_response, BUFFER_SIZE);
+
+
+
+
+                            }
+
+
+
+
+                            tmp = tmp->next;
+                        }
+
+
+
+
+
+
                         strcpy(requesting_client_node->username, request_content);
                         strcpy(server_response,"You are now called: ");
                         strcat(server_response,request_content);
@@ -162,8 +197,52 @@ int main(int argc, char *argv[])
 
                     }
                 }
-                else if (strncmp(request_type, "kick" , 4) == 0){
+                else if (strcmp(request_type, "kick") == 0){
                     // check if admin and then remove specified chlient 
+                }
+                else if (strcmp(request_type, "sayto") ==0){
+                    client* found;
+
+                    char* recipient_name = strtok(request_content, " ");
+
+            
+                    char* msg = strtok(NULL, " ");
+
+
+
+                    printf("Searching for '%s'\n",recipient_name);
+                    printf("wanting to say '%s'\n",msg);
+
+
+
+
+                    found = find_name(clients_head,recipient_name);
+                    if(strcmp(recipient_name,requesting_client_node->username) == 0){
+                        strcpy(server_response, "cant private messag yourself\n");
+                    }
+                    else if(found == NULL){
+                        strcpy(server_response,"ERROR: user not found\n");
+                    }
+                    else if (found->block_list,requesting_client_node->username == NULL){
+                        strcpy(server_response, "This user has blocked you");
+                    }
+                    else{
+
+                        printf("private message happening\n");
+                        printf("to %s\n",recipient_name);
+
+
+
+
+
+
+
+                        strcpy(server_response,requesting_client_node->username);
+                        strcat(server_response, "(private): ");
+                        strcat(server_response, msg);
+                        strcat(server_response,"\n");
+                        rc = udp_socket_write(sd, &(found->addr), server_response, BUFFER_SIZE);
+                    }
                 }
                 else{
                     strcpy(server_response, "Incorrect command\n");
