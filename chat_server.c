@@ -91,6 +91,28 @@ int main(int argc, char *argv[])
 
                 else if (strncmp(request_type, "say" , 3) == 0){
                     //broadcast to all clients
+                    client* c = clients_head;
+                    int i = 0;
+                    strcpy(server_response,requesting_client_node->username);
+                    strcat(server_response, ": ");
+                    strcat(server_response, request_content);
+                    strcat(server_response,"\n");
+                    while(c != NULL){
+                        if(find_name_in_blocked(c->block_list,requesting_client_node->username) == NULL){
+                            printf("broadcast #%d to %s:%d\n",
+                                i,
+                                inet_ntoa(c->addr.sin_addr),
+                                ntohs(c->addr.sin_port));
+
+                            rc = udp_socket_write(sd, &(c->addr), server_response, BUFFER_SIZE);
+                            printf("rc:  %d\n",rc);    
+                        }
+
+
+
+                        c= c->next;
+                        i++;
+                    }
                 }
                 else if (strncmp(request_type, "disconn" ,7) == 0){
                     strcpy(server_response, "session finished - see you soon!\n");
@@ -98,9 +120,35 @@ int main(int argc, char *argv[])
                 }
                 else if (strncmp(request_type, "mute" , 4) == 0){
                     // block a client from this client
+                    block_node* tmp = block_user(clients_head,requesting_client_node->block_list,request_content);
+                    if(tmp == NULL){
+                        strcpy(server_response,"ERROR: there is no ");
+                        strcat(server_response,request_content);
+                        strcat(server_response,"\n");
+
+                    }
+                    else{
+                        requesting_client_node->block_list = tmp;
+                        strcpy(server_response,"SUCCESS: blocked ");
+                        strcat(server_response,request_content);
+                        strcat(server_response,"\n");
+
+                    }
                 }
                 else if (strncmp(request_type, "unmute" , 6) == 0){
                     // remove the block of this client
+                    block_node *unmute_user = find_name_in_blocked(requesting_client_node->block_list,request_content);
+                    if(unmute_user==NULL){
+                        strcpy(server_response,"ERROR: you are not currently blocking ");
+                        strcat(server_response,request_content);
+                        strcat(server_response,"\n");
+                    }
+                    else{
+                        strcpy(server_response,"unblocking ");
+                        strcat(server_response,request_content);
+                        strcat(server_response,"\n");
+                        requesting_client_node->block_list = remove_b(unmute_user,requesting_client_node->block_list);
+                    }
                 }
                 else if (strncmp(request_type, "rename" , 6) == 0){
                     if(find_name(clients_head,request_content)==NULL){
@@ -127,6 +175,7 @@ int main(int argc, char *argv[])
             // whose address is now available in client_address, 
             // through the socket at sd.
             // (See details of the function in udp.h)
+            
             rc = udp_socket_write(sd, &client_address, server_response, BUFFER_SIZE);
 
             // Demo code (remove later)

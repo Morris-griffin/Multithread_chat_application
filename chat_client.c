@@ -36,6 +36,8 @@ int main(int argc, char *argv[])
     // client information
     char client_name[Max_name_length];
 
+    int x = pthread_create()
+
     while (status == 1){
         if (rc > 0 ){
             if (strcmp(client_name, "" ) != 0 ){
@@ -66,4 +68,20 @@ int main(int argc, char *argv[])
     
     }
     return 0;
+}
+
+
+void* listen(void* arg){
+    int port = *(int*)arg;
+
+    char buffer[BUFFER_SIZE];
+
+    struct sockaddr_in tmp;
+
+    while(1){
+        int rc = udp_socket_read(port, &tmp, buffer, BUFFER_SIZE);
+        if (rc > 0){
+            printf("%s",buffer);
+        }
+    }
 }
