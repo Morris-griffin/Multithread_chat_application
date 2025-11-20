@@ -18,6 +18,7 @@ int main(int argc, char *argv[])
     int sd = udp_socket_open(SERVER_PORT);
 
     assert(sd > -1);
+    client *requesting_client_node;
 
     // Server main loop
     while (1) 
@@ -46,21 +47,35 @@ int main(int argc, char *argv[])
         if (rc > 0)
         {
             // Demo code (remove later)
+            /*
             strcpy(server_response, "Hi, the server has received: ");
             strcat(server_response, client_request);
             
             strcat(server_response, "\n");
+            */
             request_type = strtok(client_request, "$");
             
             request_content = strtok(NULL, "$");
 
+            requesting_client_node = find_socket(clients_head,client_address);
+
             //if client request is connect to chat with given name
-            if(find_socket(clients_head,client_address) == NULL){
+            if(requesting_client_node == NULL){
                 if (strncmp(request_type, "conn" , 4) == 0 ){
                     if (num_clients < Max_clients){
-                        num_clients += 1;
-                        clients_head = add_c(request_content,client_address,clients_head);
-                        printf("%s", request_content);}
+                        if(find_name(clients_head,request_content)==NULL){
+                            num_clients += 1;
+                            clients_head = add_c(request_content,client_address,clients_head);
+                            strcpy(server_response,"Welcome: ");
+                            strcat(server_response,request_content);
+                            strcat(server_response,"\n");
+                            printf("%s", request_content);
+                        }
+                        else{
+                            strcpy(server_response,"ERROR: that name is already taken\n");
+                            
+                        }
+                    }
                     else {printf("Max Clients reached");};
                 }
                 else{
@@ -69,11 +84,17 @@ int main(int argc, char *argv[])
             }
             else{
 
-                if (strncmp(request_type, "say" , 3) == 0){
+                if(strncmp(request_type, "conn" , 4) == 0 ){
+                    strcpy(server_response,"you are already connected as ");
+                    strcat(server_response, requesting_client_node->username);
+                }
+
+                else if (strncmp(request_type, "say" , 3) == 0){
                     //broadcast to all clients
                 }
                 else if (strncmp(request_type, "disconn" ,7) == 0){
-                    strcpy(server_response, "kill");
+                    strcpy(server_response, "session finished - see you soon!\n");
+                    clients_head = remove_c(requesting_client_node,clients_head);
                 }
                 else if (strncmp(request_type, "mute" , 4) == 0){
                     // block a client from this client
@@ -82,7 +103,16 @@ int main(int argc, char *argv[])
                     // remove the block of this client
                 }
                 else if (strncmp(request_type, "rename" , 6) == 0){
-                    // change the clients name 
+                    if(find_name(clients_head,request_content)==NULL){
+                        strcpy(requesting_client_node->username, request_content);
+                        strcpy(server_response,"You are now called: ");
+                        strcat(server_response,request_content);
+                        strcat(server_response,"\n");
+                    }
+                    else{
+                        strcpy(server_response,"ERROR: that name is already taken\n");
+
+                    }
                 }
                 else if (strncmp(request_type, "kick" , 4) == 0){
                     // check if admin and then remove specified chlient 
