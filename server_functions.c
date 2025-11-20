@@ -26,7 +26,7 @@ client* find_name(client* head, char name[]){
     }
 
     else{
-        return find_c(head->next, name);
+        return find_name(head->next, name);
     }
 }
 
@@ -41,7 +41,7 @@ client* find_socket(client* head, struct sockaddr_in addr){
     }
 
     else{
-        return find_c(head->next, addr);
+        return find_socket(head->next, addr);
     }
 }
 

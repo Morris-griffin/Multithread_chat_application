@@ -22,5 +22,6 @@ client* find_node_before_c(client* head, client* c);
 client* remove_c(client* c, client* head);
 void de_all_list(client* head);
 void print_all_connected(client* head);
+client* find_socket(client* head, struct sockaddr_in addr);
 
 #endif

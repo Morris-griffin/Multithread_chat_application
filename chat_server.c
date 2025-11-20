@@ -50,44 +50,46 @@ int main(int argc, char *argv[])
             strcat(server_response, client_request);
             
             strcat(server_response, "\n");
-            //split the request by $ sign 
-            if (strchr(client_request, '$')!= 0 ){
-                valid_input = 1;
-            }
             request_type = strtok(client_request, "$");
             
             request_content = strtok(NULL, "$");
 
             //if client request is connect to chat with given name
-            if (valid_input = 0){
-                printf("Incorrect syntax\n");
-                strcat(server_response, "Incorrect input syntax");
-                strcat(server_response, "\n");
-            }
-            else if (strncmp(request_type, "conn" , 4) == 0 ){
+            if(find_socket(clients_head,client_address) == NULL){
+                if (strncmp(request_type, "conn" , 4) == 0 ){
                     if (num_clients < Max_clients){
                         num_clients += 1;
                         clients_head = add_c(request_content,client_address,clients_head);
                         printf("%s", request_content);}
                     else {printf("Max Clients reached");};
+                }
+                else{
+                    strcpy(server_response,"unrecognised user - use conn$ to connect and set name\n");
+                }
             }
-            else if (strncmp(request_type, "say" , 3) == 0){
-                //broadcast to all clients
-            }
-            else if (strncmp(request_type, "disconn" ,7) == 0){
-                strcpy(server_response, "kill");
-            }
-            else if (strncmp(request_type, "mute" , 4) == 0){
-                // block a client from this client
-            }
-            else if (strncmp(request_type, "unmute" , 6) == 0){
-                // remove the block of this client
-            }
-            else if (strncmp(request_type, "rename" , 6) == 0){
-                // change the clients name 
-            }
-            else if (strncmp(request_type, "kick" , 4) == 0){
-                // check if admin and then remove specified chlient 
+            else{
+
+                if (strncmp(request_type, "say" , 3) == 0){
+                    //broadcast to all clients
+                }
+                else if (strncmp(request_type, "disconn" ,7) == 0){
+                    strcpy(server_response, "kill");
+                }
+                else if (strncmp(request_type, "mute" , 4) == 0){
+                    // block a client from this client
+                }
+                else if (strncmp(request_type, "unmute" , 6) == 0){
+                    // remove the block of this client
+                }
+                else if (strncmp(request_type, "rename" , 6) == 0){
+                    // change the clients name 
+                }
+                else if (strncmp(request_type, "kick" , 4) == 0){
+                    // check if admin and then remove specified chlient 
+                }
+                else{
+                    strcpy(server_response, "Incorrect command\n");
+                }
             }
         
 
