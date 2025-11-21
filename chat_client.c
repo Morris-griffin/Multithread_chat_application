@@ -103,10 +103,13 @@ int main(int argc, char *argv[])
         fgets(client_request, BUFFER_SIZE, stdin);
 
         // This function writes to the server (sends request) through the socket at sd.
-        rc = udp_socket_write(sd, &server_addr, client_request, BUFFER_SIZE);
-        if (rc > 0)
-        {
-            
+        if(strlen(client_request)>1){
+            client_request[strlen(client_request)-1] = '\0';
+            rc = udp_socket_write(sd, &server_addr, client_request, BUFFER_SIZE);
+                if (rc > 0)
+                {
+                    
+                }
         }
     
     }
