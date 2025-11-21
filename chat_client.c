@@ -3,6 +3,7 @@
 
 #define CLIENT_PORT 10000
 #define Max_name_length 30
+#define ADMIN_PORT 6666
 // client code
 
 void* client_listen(void* arg){
@@ -24,12 +25,41 @@ void* client_listen(void* arg){
 
 int main(int argc, char *argv[])
 {
+    int client_type = 1;
     int status = 1 ;
-    // This function opens a UDP socket,
-    // binding it to all IP interfaces of this machine,
-    // and port number CLIENT_PORT.
-    // (See details of the function in udp.h)
-    int sd = udp_socket_open(0);
+    char client_request[BUFFER_SIZE], server_response[BUFFER_SIZE];
+    int sd;
+
+    while(client_type){
+
+        printf("Select: Join as admin? y/n: \n");
+        fgets(client_request, BUFFER_SIZE, stdin);
+
+        // This function opens a UDP socket,
+        // binding it to all IP interfaces of this machine,
+        // and port number CLIENT_PORT.
+        // (See details of the function in udp.h)
+
+        if(strcmp(client_request,"y\n")==0){
+            client_type=0;
+            sd = udp_socket_open(ADMIN_PORT);
+            printf("Loaded as admin client, you can kick people, now connect with conn$ \n");
+
+        }
+        else if(strcmp(client_request,"n\n") == 0){
+            client_type=0;
+            sd = udp_socket_open(0);
+            printf("Loaded as standard client, now connect with conn$ \n");
+
+        }
+        else{
+            printf("ERROR: INVALID INPUT \n");
+        }
+    }
+
+
+
+
 
     // Variable to store the server's IP address and port
     // (i.e. the server we are trying to contact).
@@ -47,7 +77,7 @@ int main(int argc, char *argv[])
     int rc = set_socket_addr(&server_addr, "127.0.0.1", SERVER_PORT);
 
     // Storage for request and response messages
-    char client_request[BUFFER_SIZE], server_response[BUFFER_SIZE];
+
     
     
 

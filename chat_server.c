@@ -82,12 +82,14 @@ int main(int argc, char *argv[])
                 else{
                     strcpy(server_response,"unrecognised user - use conn$ to connect and set name\n");
                 }
+                rc = udp_socket_write(sd, &client_address, server_response, BUFFER_SIZE);
             }
             else{
 
                 if(strcmp(request_type, "conn") == 0 ){
                     strcpy(server_response,"you are already connected as ");
                     strcat(server_response, requesting_client_node->username);
+                    rc = udp_socket_write(sd, &client_address, server_response, BUFFER_SIZE);
                 }
 
                 else if (strcmp(request_type, "say") == 0){
@@ -99,7 +101,7 @@ int main(int argc, char *argv[])
                     strcat(server_response, request_content);
                     strcat(server_response,"\n");
                     while(c != NULL){
-                        if(find_name_in_blocked(c->block_list,requesting_client_node->username) == NULL && c!=requesting_client_node){
+                        if(find_name_in_blocked(c->block_list,requesting_client_node->username) == NULL){
                             printf("broadcast #%d to %s:%d\n",
                                 i,
                                 inet_ntoa(c->addr.sin_addr),
@@ -117,6 +119,7 @@ int main(int argc, char *argv[])
                 }
                 else if (strcmp(request_type, "disconn") == 0){
                     strcpy(server_response, "session finished - see you soon!\n");
+                    rc = udp_socket_write(sd, &client_address, server_response, BUFFER_SIZE);
                     clients_head = remove_c(requesting_client_node,clients_head);
                 }
                 else if (strcmp(request_type, "mute") == 0){
@@ -135,6 +138,7 @@ int main(int argc, char *argv[])
                         strcat(server_response,"\n");
 
                     }
+                    rc = udp_socket_write(sd, &client_address, server_response, BUFFER_SIZE);
                 }
                 else if (strcmp(request_type, "unmute") == 0){
                     // remove the block of this client
@@ -150,6 +154,7 @@ int main(int argc, char *argv[])
                         strcat(server_response,"\n");
                         requesting_client_node->block_list = remove_b(unmute_user,requesting_client_node->block_list);
                     }
+                    rc = udp_socket_write(sd, &client_address, server_response, BUFFER_SIZE);
                 }
                 else if (strcmp(request_type, "rename") == 0){
                     if(find_name(clients_head,request_content)==NULL){
@@ -196,9 +201,48 @@ int main(int argc, char *argv[])
                         strcpy(server_response,"ERROR: that name is already taken\n");
 
                     }
+                    rc = udp_socket_write(sd, &client_address, server_response, BUFFER_SIZE);
                 }
                 else if (strcmp(request_type, "kick") == 0){
                     // check if admin and then remove specified chlient 
+                    if(htons(requesting_client_node->addr.sin_port) == 6666){
+                        client* kick_c;
+                        kick_c = find_name(clients_head,request_content);
+                        if(kick_c == NULL){
+                            strcpy(server_response,"ERROR: ");
+                            strcat(server_response,request_content);
+                            strcat(server_response, " is not a member of the chat.\n");
+                        }
+                        else{
+
+                            strcpy(server_response,"You have been removed from the chat\n");
+                            rc = udp_socket_write(sd, &(kick_c->addr), server_response, BUFFER_SIZE);
+                            clients_head = remove_c(kick_c,clients_head); // this isnt working
+
+
+
+
+
+                            client* c = clients_head;
+
+
+                            strcpy(server_response,request_content);
+                            strcat(server_response," has been removed from the chat\n");
+
+                            while(c != NULL){
+                                rc = udp_socket_write(sd, &(c->addr), server_response, BUFFER_SIZE);
+
+                                c = c -> next;
+                            }
+
+                        }
+                    }
+                    else{
+                        strcpy(server_response,"You cannot kick, you are not admin\n");
+                        rc = udp_socket_write(sd, &client_address, server_response, BUFFER_SIZE);
+
+                    }
+
                 }
                 else if (strcmp(request_type, "sayto") ==0){
                     client* found;
@@ -242,6 +286,7 @@ int main(int argc, char *argv[])
                         strcat(server_response, msg);
                         strcat(server_response,"\n");
                         rc = udp_socket_write(sd, &(found->addr), server_response, BUFFER_SIZE);
+                        rc = udp_socket_write(sd, &client_address, server_response, BUFFER_SIZE);
                     }
                 }
                 else{
@@ -255,7 +300,7 @@ int main(int argc, char *argv[])
             // through the socket at sd.
             // (See details of the function in udp.h)
             
-            rc = udp_socket_write(sd, &client_address, server_response, BUFFER_SIZE);
+            //rc = udp_socket_write(sd, &client_address, server_response, BUFFER_SIZE);
 
             // Demo code (remove later)
             printf("Request served...\n");
