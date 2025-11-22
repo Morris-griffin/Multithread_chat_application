@@ -7,6 +7,45 @@ char isconn[] = "conn";
 char *request_type;
 char *request_content;
 int valid_input = 0 ;
+sem_t lock, w_lock;
+int reader_num = 0;
+
+
+
+void read_lock(){
+
+        sem_wait(&lock);
+        reader_num++;
+        if(reader_num == 1){
+            sem_wait(&w_lock);
+        }
+        sem_post(&lock);
+
+}
+
+void read_unlock(){
+    sem_wait(&lock);
+    reader_num--;
+    if(reader_num == 0){
+        sem_post(&w_lock);
+    }
+    sem_post(&lock);
+}
+
+void write_lock(){
+    sem_wait(&lock);
+    sem_wait(&w_lock);
+}
+
+void write_unlock(){
+    sem_post(&w_lock);
+    sem_post(&lock);
+}
+
+
+
+
+
 int main(int argc, char *argv[])
 {
     client** pointer_to_head_pointer = malloc(sizeof(client*));
@@ -22,6 +61,8 @@ int main(int argc, char *argv[])
 
     assert(sd > -1);
     client *requesting_client_node;
+
+    int num_readers;
 
     // Server main loop
     while (1) 

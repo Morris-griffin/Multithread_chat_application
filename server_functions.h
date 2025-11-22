@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <semaphore.h>
 
 
 #include "udp.h"
