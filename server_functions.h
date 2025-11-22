@@ -15,12 +15,21 @@ typedef struct block_node {
     struct block_node* next;
 }block_node;
 
+
+
 typedef struct client {
     char username[MAX_USERNAME_LEN];
     struct sockaddr_in addr;// contains IP + port
     block_node *block_list;
     struct client* next;  
 }client;
+
+typedef struct response_thread_struct{
+    char* client_request;
+    client **pointer_to_head_pointer;
+    struct sockaddr_in *client_address;
+    int* sd;
+}response_thread_struct;
 
 client* add_c (char name[], struct sockaddr_in client_address, client* last);
 client* find_name(client* head, char name[]);
@@ -29,6 +38,8 @@ client* remove_c(client* c, client* head);
 void de_all_list(client* head);
 void print_all_connected(client* head);
 client* find_socket(client* head, struct sockaddr_in addr);
+
+void* response_thread(void* arg);
 
 
 

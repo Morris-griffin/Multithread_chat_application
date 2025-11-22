@@ -9,6 +9,83 @@ char *request_content;
 int valid_input = 0 ;
 int main(int argc, char *argv[])
 {
+    client** pointer_to_head_pointer = malloc(sizeof(client*));
+    *pointer_to_head_pointer = NULL;
+    
+    
+    int num_clients = 0;
+    // This function opens a UDP socket,
+    // binding it to all IP interfaces of this machine,
+    // and port number SERVER_PORT
+    // (See details of the function in udp.h)
+    int sd = udp_socket_open(SERVER_PORT);
+
+    assert(sd > -1);
+    client *requesting_client_node;
+
+    // Server main loop
+    while (1) 
+    {
+        
+        // Storage for request and response messages
+        char client_request[BUFFER_SIZE], server_response[BUFFER_SIZE];
+
+        // Demo code (remove later)
+        printf("Server is listening on port %d\n", SERVER_PORT);
+        printf("client list\n");
+        print_all_connected(*pointer_to_head_pointer);
+
+        // Variable to store incoming client's IP address and port
+        struct sockaddr_in client_address;
+    
+        // This function reads incoming client request from
+        // the socket at sd.
+        // (See details of the function in udp.h)
+        int rc = udp_socket_read(sd, &client_address, client_request, BUFFER_SIZE);
+        
+       
+        
+        printf("port %d\n", client_address.sin_port);
+        //printf("the ip address is %d/n", client_address.sin_addr);
+        // Successfully received an incoming request
+
+        
+        pthread_t t;
+
+        struct response_thread_struct *thread_in = malloc(sizeof(response_thread_struct));
+
+        thread_in -> client_request = malloc(rc);
+        strcpy(thread_in->client_request,client_request);
+        thread_in -> client_address = malloc(sizeof(struct sockaddr_in));
+        *(thread_in -> client_address) = client_address;
+        thread_in -> pointer_to_head_pointer = pointer_to_head_pointer;
+        thread_in->sd = &sd;
+
+
+        pthread_create(&t, NULL, response_thread, (void*)thread_in);
+        pthread_detach(t);
+
+
+
+    }
+
+    free(pointer_to_head_pointer);
+
+}
+
+
+
+
+
+
+
+
+
+
+
+/*
+int main(int argc, char *argv[])
+{
     client* clients_head = NULL;
     int num_clients = 0;
     // This function opens a UDP socket,
@@ -48,12 +125,12 @@ int main(int argc, char *argv[])
         if (rc > 0)
         {
             // Demo code (remove later)
-            /*
+            
             strcpy(server_response, "Hi, the server has received: ");
             strcat(server_response, client_request);
             
             strcat(server_response, "\n");
-            */
+            
             request_type = strtok(client_request, "$");
             
             request_content = strtok(NULL, "$");
@@ -335,3 +412,4 @@ int main(int argc, char *argv[])
     return 0;
 
 }
+*/

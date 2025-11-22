@@ -175,3 +175,300 @@ void de_all_b_list(block_node* head){
         free(head);
     }
 }
+
+
+
+void* response_thread(void* arg){
+    response_thread_struct *thread_input = (response_thread_struct*)arg;
+    char* client_request = thread_input -> client_request;
+    client** pointer_to_head_pointer = thread_input -> pointer_to_head_pointer;
+    struct sockaddr_in *client_address = thread_input -> client_address;
+
+    int sd = *(thread_input->sd);
+    
+    int rc;
+
+    client *requesting_client_node;
+
+    char *request_type;
+    char *request_content;
+
+    char server_response[BUFFER_SIZE];
+
+    request_type = strtok(client_request, "$");
+            
+    request_content = strtok(NULL, "$");
+
+    requesting_client_node = find_socket(*pointer_to_head_pointer,*client_address);
+
+            //if client request is connect to chat with given name
+            if(requesting_client_node == NULL){
+                if (strcmp(request_type, "conn") == 0 ){
+                    if(find_name(*pointer_to_head_pointer,request_content)==NULL){
+                        *pointer_to_head_pointer = add_c(request_content,*client_address,*pointer_to_head_pointer);
+                        strcpy(server_response,"Welcome: ");
+                        strcat(server_response,request_content);
+                        strcat(server_response,"\n");
+                        printf("%s", request_content);
+                    }
+                    else{
+                        strcpy(server_response,"ERROR: that name is already taken\n");
+                        
+                    }
+                }
+                else{
+                    strcpy(server_response,"unrecognised user - use conn$ to connect and set name\n");
+                }
+                rc = udp_socket_write(sd, client_address, server_response, BUFFER_SIZE);
+            }
+            else{
+
+                if(strcmp(request_type, "conn") == 0 ){
+                    strcpy(server_response,"you are already connected as ");
+                    strcat(server_response, requesting_client_node->username);
+                    rc = udp_socket_write(sd, client_address, server_response, BUFFER_SIZE);
+                }
+
+                else if (strcmp(request_type, "say") == 0){
+                    //broadcast to all clients
+                    client* c = *pointer_to_head_pointer;
+                    int i = 0;
+                    strcpy(server_response,requesting_client_node->username);
+                    strcat(server_response, ": ");
+                    strcat(server_response, request_content);
+                    strcat(server_response,"\n");
+                    while(c != NULL){
+                        if(find_name_in_blocked(c->block_list,requesting_client_node->username) == NULL){
+                            printf("broadcast #%d to %s:%d\n",
+                                i,
+                                inet_ntoa(c->addr.sin_addr),
+                                ntohs(c->addr.sin_port));
+
+                            rc = udp_socket_write(sd, &(c->addr), server_response, BUFFER_SIZE);
+                            printf("rc:  %d\n",rc);    
+                        }
+
+
+
+                        c= c->next;
+                        i++;
+                    }
+                }
+                else if (strcmp(request_type, "disconn") == 0){
+                    strcpy(server_response, "session finished - see you soon!\n");
+                    rc = udp_socket_write(sd, client_address, server_response, BUFFER_SIZE);
+                    *pointer_to_head_pointer = remove_c(requesting_client_node,*pointer_to_head_pointer);
+                }
+                else if (strcmp(request_type, "mute") == 0){
+                    // block a client from this client
+                    if(strcmp(request_content,requesting_client_node->username)==0){
+                        strcpy(server_response,"ERROR: Trying to mute yourself\n");
+                    }
+                    else{
+                        block_node* tmp = block_user(*pointer_to_head_pointer,requesting_client_node->block_list,request_content);
+                        if(tmp == NULL){
+                            strcpy(server_response,"ERROR: there is no ");
+                            strcat(server_response,request_content);
+                            strcat(server_response,"\n");
+
+                        }
+                        else{
+                            requesting_client_node->block_list = tmp;
+                            strcpy(server_response,"SUCCESS: blocked ");
+                            strcat(server_response,request_content);
+                            strcat(server_response,"\n");
+
+                        }
+                    }
+                    rc = udp_socket_write(sd, client_address, server_response, BUFFER_SIZE);
+                }
+                else if (strcmp(request_type, "unmute") == 0){
+                    // remove the block of this client
+                    block_node *unmute_user = find_name_in_blocked(requesting_client_node->block_list,request_content);
+                    if(unmute_user==NULL){
+                        strcpy(server_response,"ERROR: you are not currently blocking ");
+                        strcat(server_response,request_content);
+                        strcat(server_response,"\n");
+                    }
+                    else{
+                        strcpy(server_response,"unblocking ");
+                        strcat(server_response,request_content);
+                        strcat(server_response,"\n");
+                        requesting_client_node->block_list = remove_b(unmute_user,requesting_client_node->block_list);
+                    }
+                    rc = udp_socket_write(sd, client_address, server_response, BUFFER_SIZE);
+                }
+                else if (strcmp(request_type, "rename") == 0){
+                    if(find_name(*pointer_to_head_pointer,request_content)==NULL){
+
+
+                        client* tmp = *pointer_to_head_pointer;
+
+                        block_node* blocked;
+
+                        while(tmp != NULL){
+                            blocked = find_name_in_blocked(tmp->block_list,requesting_client_node->username);
+
+                            if(blocked != NULL){
+                                strcpy(blocked -> username, request_content);
+                                strcpy(server_response, requesting_client_node->username);
+                                strcat(server_response,"who is on your blocked list, has now changed name to ");
+                                strcat(server_response,request_content);
+                                strcat(server_response,"they will remain blocked\n");
+
+                                rc = udp_socket_write(sd, &(tmp->addr), server_response, BUFFER_SIZE);
+
+
+
+
+                            }
+
+
+
+
+                            tmp = tmp->next;
+                        }
+
+
+
+
+
+
+                        strcpy(requesting_client_node->username, request_content);
+                        strcpy(server_response,"You are now called: ");
+                        strcat(server_response,request_content);
+                        strcat(server_response,"\n");
+                    }
+                    else{
+                        strcpy(server_response,"ERROR: that name is already taken\n");
+
+                    }
+                    rc = udp_socket_write(sd, client_address, server_response, BUFFER_SIZE);
+                }
+                else if (strcmp(request_type, "kick") == 0){
+                    // check if admin and then remove specified chlient
+                    if(strcmp(request_content,requesting_client_node->username)==0){
+                        strcpy(server_response,"ERROR: Trying to kick yourself\n");
+                        rc = udp_socket_write(sd, client_address, server_response, BUFFER_SIZE);
+                    } 
+                    else{
+                        if(htons(requesting_client_node->addr.sin_port) == 6666){
+                            client* kick_c;
+                            kick_c = find_name(*pointer_to_head_pointer,request_content);
+                            if(kick_c == NULL){
+                                strcpy(server_response,"ERROR: ");
+                                strcat(server_response,request_content);
+                                strcat(server_response, " is not a member of the chat.\n");
+                            }
+                            else{
+
+                                strcpy(server_response,"You have been removed from the chat\n");
+                                rc = udp_socket_write(sd, &(kick_c->addr), server_response, BUFFER_SIZE);
+                                *pointer_to_head_pointer = remove_c(kick_c,*pointer_to_head_pointer); // this isnt working
+
+
+
+
+
+                                client* c = *pointer_to_head_pointer;
+
+
+                                strcpy(server_response,request_content);
+                                strcat(server_response," has been removed from the chat\n");
+
+                                while(c != NULL){
+                                    rc = udp_socket_write(sd, &(c->addr), server_response, BUFFER_SIZE);
+
+                                    c = c -> next;
+                                }
+
+                            }
+                        }
+                        else{
+                            strcpy(server_response,"You cannot kick, you are not admin\n");
+                            rc = udp_socket_write(sd, client_address, server_response, BUFFER_SIZE);
+                        }
+                    }
+
+                }
+                else if (strcmp(request_type, "sayto") ==0){
+                    client* found;
+
+                    char* recipient_name = strtok(request_content, " ");
+
+            
+                    char* msg = strtok(NULL, " ");
+
+                    if(msg == NULL){
+                        strcpy(server_response,"ERROR - wrong sayto input format\n");
+                        rc = udp_socket_write(sd, &(requesting_client_node->addr), server_response, BUFFER_SIZE);
+
+                    }
+                    else{
+
+
+
+                        printf("Searching for '%s'\n",recipient_name);
+                        printf("wanting to say '%s'\n",msg);
+
+
+
+
+                        found = find_name(*pointer_to_head_pointer,recipient_name);
+                        if(strcmp(recipient_name,requesting_client_node->username) == 0){
+                            strcpy(server_response, "cant private messag yourself\n");
+                            rc = udp_socket_write(sd, &(found->addr), server_response, BUFFER_SIZE);
+                        }
+                        else if(found == NULL){
+                            strcpy(server_response,"ERROR: user not found\n");
+                            rc = udp_socket_write(sd, &(found->addr), server_response, BUFFER_SIZE);
+                        }
+                        else if (find_name_in_blocked(found->block_list,requesting_client_node->username) != NULL){
+                            strcpy(server_response, "This user has blocked you");
+                            rc = udp_socket_write(sd, &(found->addr), server_response, BUFFER_SIZE);
+                        }
+                        else{
+
+                            printf("private message happening\n");
+                            printf("to %s\n",recipient_name);
+
+
+
+
+
+
+
+                            strcpy(server_response,requesting_client_node->username);
+                            strcat(server_response, "(private with ");
+                            strcat(server_response,recipient_name);
+                            strcat(server_response,"): ");
+                            strcat(server_response, msg);
+                            strcat(server_response,"\n");
+                            rc = udp_socket_write(sd, &(found->addr), server_response, BUFFER_SIZE);
+                            rc = udp_socket_write(sd, client_address, server_response, BUFFER_SIZE);
+                            
+                        }
+                    }
+                }
+                else{
+                    strcpy(server_response, "Incorrect command\n");
+                }
+                //rc = udp_socket_write(sd, &client_address, server_response, BUFFER_SIZE);
+            }
+        
+
+            // This function writes back to the incoming client,
+            // whose address is now available in client_address, 
+            // through the socket at sd.
+            // (See details of the function in udp.h)
+            
+            //rc = udp_socket_write(sd, &client_address, server_response, BUFFER_SIZE);
+
+            // Demo code (remove later)
+            printf("Request served...\n");
+            free(client_request);
+            free(client_address);
+            free(thread_input);
+
+    return NULL;
+}
