@@ -6,6 +6,12 @@
 #define ADMIN_PORT 6666
 // client code
 
+typedef struct w_thread_in{
+    struct sockaddr_in *server_addr;
+    char *client_request;
+    int *sd;
+}w_thread_in;
+
 void* client_listen(void* arg){
     int port = *(int*)arg;
 
@@ -20,6 +26,33 @@ void* client_listen(void* arg){
         }
     }
     return NULL;
+}
+
+void* client_speak(void* arg){
+    int rc;
+    w_thread_in input = *(w_thread_in*)arg;
+    
+    while (1){
+
+        fgets(input.client_request, BUFFER_SIZE, stdin);
+
+        // This function writes to the server (sends request) through the socket at sd.
+        if(strlen(input.client_request)>1){
+            input.client_request[strlen(input.client_request)-1] = '\0';
+            rc = udp_socket_write(*input.sd, input.server_addr, input.client_request, BUFFER_SIZE);
+                if (rc > 0)
+                {
+                    
+                }
+        }
+    
+    }
+
+    return NULL;
+
+
+
+
 }
 
 
@@ -84,35 +117,29 @@ int main(int argc, char *argv[])
     // client information
     char client_name[Max_name_length];
 
-    pthread_t listener_thread;
+    pthread_t listener_thread, writer_thread;
 
-    int x = pthread_create(&listener_thread,NULL,client_listen,(void*)&sd);
+
+    w_thread_in write_thread_in;
+    write_thread_in.server_addr = &server_addr;
+    write_thread_in.client_request = client_request;
+    write_thread_in.sd = &sd;
+
+    int x = pthread_create(&writer_thread,NULL,client_speak,(void*)&write_thread_in);
+    if(x != 0){
+        printf("writer thread creation failed\n");
+    }
+
+
+    x = pthread_create(&listener_thread,NULL,client_listen,(void*)&sd);
     if(x != 0){
         printf("listener thread creation failed\n");
     }
 
-    while (status == 1){
-        if (rc > 0 ){
-            if (strcmp(client_name, "" ) != 0 ){
-                //printf("Hello %s what Message do you want to send to the server \n", client_name);
+    pthread_join(listener_thread, NULL);
+    pthread_join(writer_thread, NULL);
 
-            }
 
-        };
-
-        fgets(client_request, BUFFER_SIZE, stdin);
-
-        // This function writes to the server (sends request) through the socket at sd.
-        if(strlen(client_request)>1){
-            client_request[strlen(client_request)-1] = '\0';
-            rc = udp_socket_write(sd, &server_addr, client_request, BUFFER_SIZE);
-                if (rc > 0)
-                {
-                    
-                }
-        }
-    
-    }
     return 0;
 }
 
