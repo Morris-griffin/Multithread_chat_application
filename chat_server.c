@@ -8,17 +8,21 @@ char *request_type;
 char *request_content;
 int valid_input = 0 ;
 
-sem_t read_sem, write_sem;
+sem_t read_sem, write_sem, write_blocker, writer_priority_block;
 int reader_num = 0;
+int writer_num = 0;
 
 
-void try_read() {
-    sem_wait(&read_sem);      
+void read_lock() {
+    sem_wait(&read_sem); 
+    sem_wait(&writer_priority_block);
+     
     reader_num++;
     if (reader_num == 1) {
         // first reader blocks writers
         sem_wait(&write_sem);
     }
+    sem_post(&writer_priority_block);
     sem_post(&read_sem);           // unlock reader_count
 
     // critical section
@@ -35,12 +39,35 @@ void try_read() {
 }
 
 
-void try_write(){
+void write_lock(){
+    
+
+    sem_wait(&write_blocker);
+
+    writer_num++;
+    if(writer_num==1){
+        sem_wait(&writer_priority_block);
+    }
+
+    
+
+
+    sem_post(&write_blocker);
+
     sem_wait(&write_sem);  // wait until no readers and no other writer
     // critical section
     //do_writing();
-    
-    sem_post(&write_sem);      
+
+
+}
+void write_unlock(){    
+    sem_wait(&write_blocker);
+    sem_post(&write_sem);
+    writer_num--;
+    if(writer_num==0){
+        sem_post(&writer_priority_block);
+    }
+    sem_post(&write_blocker);      
 }
 
 
