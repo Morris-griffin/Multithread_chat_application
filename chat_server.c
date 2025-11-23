@@ -12,7 +12,7 @@ sem_t read_sem, write_sem;
 int reader_num = 0;
 
 
-void try_read() {
+void read_lock() {
     sem_wait(&read_sem);      
     reader_num++;
     if (reader_num == 1) {
@@ -23,6 +23,8 @@ void try_read() {
 
     // critical section
     //do_reading();
+}
+void read_unlock(){
     
 
     sem_wait(&read_sem);         // lock reader_count
@@ -35,11 +37,12 @@ void try_read() {
 }
 
 
-void try_write(){
+void write_lock(){
     sem_wait(&write_sem);  // wait until no readers and no other writer
     // critical section
     //do_writing();
-    
+}
+void write_unlock(){    
     sem_post(&write_sem);      
 }
 
