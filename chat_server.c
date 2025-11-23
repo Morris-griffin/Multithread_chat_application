@@ -10,9 +10,14 @@ int valid_input = 0 ;
 
 sem_t read_sem, write_sem;
 int reader_num = 0;
+int writer_waiting = 0;
+int writer_lock = 0;
 
 
 void read_lock() {
+    
+
+    //atomic compare - only go through if writer_lock = 0
     sem_wait(&read_sem);      
     reader_num++;
     if (reader_num == 1) {
@@ -38,12 +43,22 @@ void read_unlock(){
 
 
 void write_lock(){
+    writer_waiting++;
+    if(writer_waiting==1){
+        writer_lock = 1;
+    }
     sem_wait(&write_sem);  // wait until no readers and no other writer
+
     // critical section
     //do_writing();
 }
 void write_unlock(){    
-    sem_post(&write_sem);      
+    sem_post(&write_sem);  
+    writer_waiting--;
+    if(writer_waiting ==0){
+        writer_lock = 0;
+    } 
+
 }
 
 
