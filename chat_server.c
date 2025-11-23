@@ -10,14 +10,9 @@ int valid_input = 0 ;
 
 sem_t read_sem, write_sem;
 int reader_num = 0;
-int writer_waiting = 0;
-int writer_lock = 0;
 
 
-void read_lock() {
-    
-
-    //atomic compare - only go through if writer_lock = 0
+void try_read() {
     sem_wait(&read_sem);      
     reader_num++;
     if (reader_num == 1) {
@@ -28,9 +23,7 @@ void read_lock() {
 
     // critical section
     //do_reading();
-}
-void read_unlock(){
-    
+
 
     sem_wait(&read_sem);         // lock reader_count
     reader_num--;
@@ -42,23 +35,12 @@ void read_unlock(){
 }
 
 
-void write_lock(){
-    writer_waiting++;
-    if(writer_waiting==1){
-        writer_lock = 1;
-    }
+void try_write(){
     sem_wait(&write_sem);  // wait until no readers and no other writer
-
     // critical section
     //do_writing();
-}
-void write_unlock(){    
-    sem_post(&write_sem);  
-    writer_waiting--;
-    if(writer_waiting ==0){
-        writer_lock = 0;
-    } 
-
+    
+    sem_post(&write_sem);      
 }
 
 
@@ -92,7 +74,7 @@ int main(int argc, char *argv[])
 
         // Demo code (remove later)
         printf("Server is listening on port %d\n", SERVER_PORT);
-        printf("client list\n");
+        //,printf("client list\n");
         print_all_connected(*pointer_to_head_pointer);
 
         // Variable to store incoming client's IP address and port
