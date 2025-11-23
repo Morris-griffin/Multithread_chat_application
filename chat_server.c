@@ -14,8 +14,9 @@ int writer_num = 0;
 
 
 void read_lock() {
-    sem_wait(&read_sem); 
     sem_wait(&writer_priority_block);
+    sem_wait(&read_sem); 
+
      
     reader_num++;
     if (reader_num == 1) {
