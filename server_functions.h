@@ -62,4 +62,17 @@ block_node* remove_b(block_node* b, block_node* head);
 
 void de_all_b_list(block_node* head);
 
+
+////////// locks ///////
+sem_t read_sem, write_sem, write_blocker, writer_priority_block;
+int reader_num = 0;
+int writer_num = 0;
+
+void read_lock();
+void read_unlock();
+
+
+void write_lock();
+void write_unlock();
+
 #endif

@@ -178,6 +178,74 @@ void de_all_b_list(block_node* head){
 
 
 
+/////////////////////////////////////////////
+/////////////////// locks ///////////////////
+/////////////////////////////////////////////
+
+
+
+
+void read_lock() {
+    sem_wait(&writer_priority_block);
+    sem_wait(&read_sem); 
+
+     
+    reader_num++;
+    if (reader_num == 1) {
+        // first reader blocks writers
+        sem_wait(&write_sem);
+    }
+    sem_post(&writer_priority_block);
+    sem_post(&read_sem);           // unlock reader_count
+
+    // critical section
+    //do_reading();
+}
+
+void read_unlock() {
+    sem_wait(&read_sem);         // lock reader_count
+    reader_num--;
+    if (reader_num == 0) {
+        // last reader unblocks writers
+        sem_post(&write_sem);
+    }
+    sem_post(&read_sem);           // unlock reader_count
+}
+
+
+void write_lock(){
+    
+
+    sem_wait(&write_blocker);
+
+    writer_num++;
+    if(writer_num==1){
+        sem_wait(&writer_priority_block);
+    }
+
+    
+
+
+    sem_post(&write_blocker);
+
+    sem_wait(&write_sem);  // wait until no readers and no other writer
+    // critical section
+    //do_writing();
+
+
+}
+void write_unlock(){    
+    sem_wait(&write_blocker);
+    sem_post(&write_sem);
+    writer_num--;
+    if(writer_num==0){
+        sem_post(&writer_priority_block);
+    }
+    sem_post(&write_blocker);      
+}
+
+
+
 void* response_thread(void* arg){
     response_thread_struct *thread_input = (response_thread_struct*)arg;
     char* client_request = thread_input -> client_request;
@@ -202,8 +270,9 @@ void* response_thread(void* arg){
     requesting_client_node = find_socket(*pointer_to_head_pointer,*client_address);
 
             //if client request is connect to chat with given name
-            if(requesting_client_node == NULL){
+            if(requesting_client_node == NULL){ //swap for not authorised later
                 if (strcmp(request_type, "conn") == 0 ){
+
                     if(find_name(*pointer_to_head_pointer,request_content)==NULL){
                         *pointer_to_head_pointer = add_c(request_content,*client_address,*pointer_to_head_pointer);
                         strcpy(server_response,"Welcome: ");
