@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
     // You can change this to a different IP address
     // when running the server on a different machine.
     // (See details of the function in udp.h)
-    int rc = set_socket_addr(&server_addr, "172.21.172.130", SERVER_PORT);
+    int rc = set_socket_addr(&server_addr, "10.255.255.254", SERVER_PORT);
 
     // Storage for request and response messages
 
