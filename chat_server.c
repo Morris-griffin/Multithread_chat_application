@@ -75,8 +75,10 @@ void write_unlock(){
 
 int main(int argc, char *argv[])
 {
-    sem_init(&read_sem, 1, 1);
-    sem_init(&write_sem, 1,1 );
+    sem_init(&read_sem, 0, 1);
+    sem_init(&write_sem, 0,1 );
+    sem_init(&write_blocker, 0, 1);
+    sem_init(&writer_priority_block, 0,1 );
     client** pointer_to_head_pointer = malloc(sizeof(client*));
     *pointer_to_head_pointer = NULL;
     
