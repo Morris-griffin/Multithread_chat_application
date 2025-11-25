@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "udp.h"
 
 #define CLIENT_PORT 10000
@@ -12,15 +13,48 @@ typedef struct w_thread_in{
     int *sd;
 }w_thread_in;
 
+typedef struct l_thread_in{
+    int* port;
+    int* key_found;
+    char* key;
+} l_thread_in;
+
 void* client_listen(void* arg){
-    int port = *(int*)arg;
+    l_thread_in *in_data = (l_thread_in*)arg;
+
+    unsigned int key;
 
     char buffer[BUFFER_SIZE];
 
     struct sockaddr_in tmp;
+    char* key_check;
+    char* key_num;
+    char session_key[15];
 
     while(1){
-        int rc = udp_socket_read(port, &tmp, buffer, BUFFER_SIZE);
+        int rc = udp_socket_read(*(in_data->port), &tmp, buffer, BUFFER_SIZE);
+        if(!*(in_data->key_found)){
+            key_check = strtok(buffer,":");
+            key_num = strtok(NULL,":");
+            printf("%s\n",buffer); 
+            if(strcmp(key_check,"key") == 0){
+                key = (unsigned int) strtoul(key_num, NULL, 10);
+                printf("Acquired token\n");
+                *(in_data->key_found) = 1;
+                printf("original key %d\n",key);
+
+                snprintf(session_key, sizeof(session_key), "%u", key ^ (unsigned)ntohs(tmp.sin_port));
+                printf("session key (xor'd) %s\n", session_key);
+                strcpy(in_data->key,session_key);
+
+
+            }
+            else{
+                printf("Difficulties acquiring token\n");
+            }
+
+        }
+        else
         if (rc > 0){
             printf("%s",buffer);
         }
@@ -130,14 +164,22 @@ int main(int argc, char *argv[])
         printf("writer thread creation failed\n");
     }
 
+    int key_acquired = 0;
 
-    x = pthread_create(&listener_thread,NULL,client_listen,(void*)&sd);
+    char key_str[15];
+
+    l_thread_in *listen_input = malloc(sizeof(l_thread_in));
+    listen_input->port = &sd;
+    listen_input->key_found = &key_acquired;
+    listen_input->key = key_str;
+    x = pthread_create(&listener_thread,NULL,client_listen,(void*)listen_input);
     if(x != 0){
         printf("listener thread creation failed\n");
     }
 
     pthread_join(listener_thread, NULL);
     pthread_join(writer_thread, NULL);
+    free(listen_input);
 
 
     return 0;

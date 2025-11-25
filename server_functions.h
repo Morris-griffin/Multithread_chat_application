@@ -30,6 +30,7 @@ typedef struct response_thread_struct{
     client **pointer_to_head_pointer;
     struct sockaddr_in *client_address;
     int* sd;
+    int* key;
 }response_thread_struct;
 
 client* add_c (char name[], struct sockaddr_in client_address, client* last);

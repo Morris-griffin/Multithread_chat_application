@@ -256,6 +256,7 @@ void* response_thread(void* arg){
     struct sockaddr_in *client_address = thread_input -> client_address;
 
     int sd = *(thread_input->sd);
+    int session_key = *(thread_input->key);
     
     int rc;
 
@@ -278,14 +279,23 @@ void* response_thread(void* arg){
                     write_lock();
                     if(find_name(*pointer_to_head_pointer,request_content)==NULL){
                         *pointer_to_head_pointer = add_c(request_content,*client_address,*pointer_to_head_pointer);
-                        write_unlock();
+                        
+                        
+                        
+                        
+                        strcpy(server_response,"key:");
+                        char tmp[15];
+                        snprintf(tmp, sizeof(tmp), "%u\n", session_key);
+                        strcat(server_response,tmp);
+                        printf("%s/n",server_response);
+                        rc = udp_socket_write(sd, client_address, server_response, BUFFER_SIZE);
                         strcpy(server_response,"Welcome: ");
                         strcat(server_response,request_content);
                         strcat(server_response,"\n");
                         printf("%s", request_content);
                     }
                     else{
-                        write_unlock();
+                        
                         strcpy(server_response,"ERROR: that name is already taken\n");
                         
                     }
@@ -295,6 +305,7 @@ void* response_thread(void* arg){
                     strcpy(server_response,"You are an unrecognised user - you must use conn$ to connect and set name\n");
                 }
                 rc = udp_socket_write(sd, client_address, server_response, BUFFER_SIZE);
+                write_unlock();
             }
             else{
 

@@ -21,6 +21,10 @@ int main(int argc, char *argv[])
     client** pointer_to_head_pointer = malloc(sizeof(client*));
     *pointer_to_head_pointer = NULL;
     
+    srand(time(NULL));
+    unsigned int key = rand();
+    
+
     
     int num_clients = 0;
     // This function opens a UDP socket,
@@ -71,6 +75,7 @@ int main(int argc, char *argv[])
         *(thread_in -> client_address) = client_address;
         thread_in -> pointer_to_head_pointer = pointer_to_head_pointer;
         thread_in->sd = &sd;
+        thread_in->key = &key;
 
 
         pthread_create(&t, NULL, response_thread, (void*)thread_in);
