@@ -1,10 +1,28 @@
 #include <stdio.h>
 #include "udp.h"
 
+#include <ncurses.h>
+#include <string.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <sys/select.h>
+#include <sys/time.h>
+#include <stdio.h>
+
+
 #define CLIENT_PORT 10000
 #define Max_name_length 30
 #define ADMIN_PORT 6666
 // client code
+typedef struct interface_dimensions {
+    int rows, cols;
+    int input_height ; // one line + border
+    int chat_height ;
+    WINDOW *chat_win;
+    WINDOW *input_win;
+} interface_dimensions;
+
+interface_dimensions nwindow;
 
 typedef struct w_thread_in{
     struct sockaddr_in *server_addr;
@@ -28,12 +46,16 @@ void* client_listen(void* arg){
     return NULL;
 }
 
-void* client_speak(void* arg){
+void* client_speak(void* arg, void* rg2){
     int rc;
     w_thread_in input = *(w_thread_in*)arg;
     
     while (1){
 
+
+
+
+        
         fgets(input.client_request, BUFFER_SIZE, stdin);
 
         // This function writes to the server (sends request) through the socket at sd.
@@ -55,9 +77,17 @@ void* client_speak(void* arg){
 
 }
 
+void refreshw(char *arg[] ){
+   
+}
+
+
 
 int main(int argc, char *argv[])
 {
+    
+
+
     int client_type = 1;
     int status = 1 ;
     char client_request[BUFFER_SIZE], server_response[BUFFER_SIZE];
@@ -90,7 +120,29 @@ int main(int argc, char *argv[])
         }
     }
 
+    initscr();
+    cbreak();
+    noecho();
+    keypad(stdscr, TRUE);
+    curs_set(1);
 
+        
+    getmaxyx(stdscr, nwindow.rows, nwindow.cols);
+    nwindow.input_height = 3;
+    nwindow.chat_height = nwindow.rows - nwindow.input_height;
+
+     
+    nwindow.chat_win = newwin(nwindow.chat_height, nwindow.cols, 0, 0);
+    nwindow.input_win = newwin(nwindow.input_height, nwindow.cols, nwindow.chat_height, 0);
+
+    scrollok(nwindow.chat_win, TRUE);  // allow scrolling
+    box(nwindow.chat_win, 0, 0);
+    box(nwindow.input_win, 0, 0);
+
+    mvwprintw(nwindow.chat_win, 0, 2, " Chat ");
+    mvwprintw(nwindow.input_win, 0, 2, " Message ");
+    wrefresh(nwindow.chat_win);
+    wrefresh(nwindow.input_win);
 
 
 
