@@ -11,6 +11,8 @@ typedef struct w_thread_in{
     struct sockaddr_in *server_addr;
     char *client_request;
     int *sd;
+    int* key_found;
+    char* key; 
 }w_thread_in;
 
 typedef struct l_thread_in{
@@ -47,11 +49,15 @@ void* client_listen(void* arg){
                 printf("session key (xor'd) %s\n", session_key);
                 strcpy(in_data->key,session_key);
 
+                *(in_data->key_found) = 1;
+
 
             }
             else{
                 printf("Difficulties acquiring token\n");
             }
+
+            
 
         }
         else
@@ -65,21 +71,48 @@ void* client_listen(void* arg){
 void* client_speak(void* arg){
     int rc;
     w_thread_in input = *(w_thread_in*)arg;
+
+    char output_request[BUFFER_SIZE];
     
     while (1){
 
         fgets(input.client_request, BUFFER_SIZE, stdin);
 
+
         // This function writes to the server (sends request) through the socket at sd.
-        if(strlen(input.client_request)>1){
-            input.client_request[strlen(input.client_request)-1] = '\0';
-            rc = udp_socket_write(*input.sd, input.server_addr, input.client_request, BUFFER_SIZE);
-                if (rc > 0)
-                {
-                    
-                }
-        }
-    
+        if(*(input.key_found)){
+
+            if(strlen(input.client_request)>1){
+                input.client_request[strlen(input.client_request)-1] = '\0';
+                strcpy(output_request,input.key);
+                strcat(output_request,"#");
+                strcat(output_request,input.client_request);
+                printf("message sent %s\n", output_request);
+                rc = udp_socket_write(*input.sd, input.server_addr, output_request, BUFFER_SIZE);
+                    if (rc > 0)
+                    {
+                        
+                    }
+            }
+        } 
+        else{
+
+            if(strlen(input.client_request)>1){
+                input.client_request[strlen(input.client_request)-1] = '\0';
+                strcpy(output_request,"11#");
+
+                strcat(output_request,input.client_request);
+                printf("message sent %s\n", output_request);
+                rc = udp_socket_write(*input.sd, input.server_addr, output_request, BUFFER_SIZE);
+                    if (rc > 0)
+                    {
+                        
+                    }
+            }            
+
+
+
+        }   
     }
 
     return NULL;
@@ -145,6 +178,9 @@ int main(int argc, char *argv[])
 
     // Storage for request and response messages
 
+    int key_acquired = 0;
+
+    char key_str[15];
     
     
 
@@ -158,28 +194,27 @@ int main(int argc, char *argv[])
     write_thread_in.server_addr = &server_addr;
     write_thread_in.client_request = client_request;
     write_thread_in.sd = &sd;
+    write_thread_in.key_found = &key_acquired;
+    write_thread_in.key = key_str;
 
     int x = pthread_create(&writer_thread,NULL,client_speak,(void*)&write_thread_in);
     if(x != 0){
         printf("writer thread creation failed\n");
     }
 
-    int key_acquired = 0;
 
-    char key_str[15];
-
-    l_thread_in *listen_input = malloc(sizeof(l_thread_in));
-    listen_input->port = &sd;
-    listen_input->key_found = &key_acquired;
-    listen_input->key = key_str;
-    x = pthread_create(&listener_thread,NULL,client_listen,(void*)listen_input);
+    l_thread_in listen_input;
+    listen_input.port = &sd;
+    listen_input.key_found = &key_acquired;
+    listen_input.key = key_str;
+    x = pthread_create(&listener_thread,NULL,client_listen,(void*)&listen_input);
     if(x != 0){
         printf("listener thread creation failed\n");
     }
 
     pthread_join(listener_thread, NULL);
     pthread_join(writer_thread, NULL);
-    free(listen_input);
+
 
 
     return 0;

@@ -23,6 +23,8 @@ int main(int argc, char *argv[])
     
     srand(time(NULL));
     unsigned int key = rand();
+    char key_str[20];
+    snprintf(key_str, sizeof(key_str), "%u", key);
     
 
     
@@ -421,7 +423,7 @@ int main(int argc, char *argv[])
             //rc = udp_socket_write(sd, &client_address, server_response, BUFFER_SIZE);
 
             // Demo code (remove later)
-            printf("Request served...\n");
+            printf("...\n");
         }
     }
 
