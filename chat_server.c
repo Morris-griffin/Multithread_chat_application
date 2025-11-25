@@ -8,77 +8,13 @@ char *request_type;
 char *request_content;
 int valid_input = 0 ;
 
-sem_t read_sem, write_sem, write_blocker, writer_priority_block;
-int reader_num = 0;
-int writer_num = 0;
 
-
-void read_lock() {
-    sem_wait(&writer_priority_block);
-    sem_wait(&read_sem); 
-
-     
-    reader_num++;
-    if (reader_num == 1) {
-        // first reader blocks writers
-        sem_wait(&write_sem);
-    }
-    sem_post(&writer_priority_block);
-    sem_post(&read_sem);           // unlock reader_count
-
-    // critical section
-    //do_reading();
-
-
-    sem_wait(&read_sem);         // lock reader_count
-    reader_num--;
-    if (reader_num == 0) {
-        // last reader unblocks writers
-        sem_post(&write_sem);
-    }
-    sem_post(&read_sem);           // unlock reader_count
-}
-
-
-void write_lock(){
-    
-
-    sem_wait(&write_blocker);
-
-    writer_num++;
-    if(writer_num==1){
-        sem_wait(&writer_priority_block);
-    }
-
-    
-
-
-    sem_post(&write_blocker);
-
-    sem_wait(&write_sem);  // wait until no readers and no other writer
-    // critical section
-    //do_writing();
-
-
-}
-void write_unlock(){    
-    sem_wait(&write_blocker);
-    sem_post(&write_sem);
-    writer_num--;
-    if(writer_num==0){
-        sem_post(&writer_priority_block);
-    }
-    sem_post(&write_blocker);      
-}
 
 
 
 int main(int argc, char *argv[])
 {
-    sem_init(&read_sem, 0, 1);
-    sem_init(&write_sem, 0,1 );
-    sem_init(&write_blocker, 0, 1);
-    sem_init(&writer_priority_block, 0,1 );
+   
     client** pointer_to_head_pointer = malloc(sizeof(client*));
     *pointer_to_head_pointer = NULL;
     
