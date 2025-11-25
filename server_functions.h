@@ -42,7 +42,7 @@ client* find_socket(client* head, struct sockaddr_in addr);
 
 void* response_thread(void* arg);
 
-
+int refreshw();
 
 
 
