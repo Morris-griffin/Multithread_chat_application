@@ -13,6 +13,7 @@ typedef struct w_thread_in{
     int *sd;
     int* key_found;
     char* key; 
+    struct sockaddr_in *this_port;
 }w_thread_in;
 
 typedef struct l_thread_in{
@@ -33,6 +34,9 @@ void* client_listen(void* arg){
     char* key_num;
     char session_key[15];
 
+
+
+
     while(1){
         int rc = udp_socket_read(*(in_data->port), &tmp, buffer, BUFFER_SIZE);
         if(!*(in_data->key_found)){
@@ -45,9 +49,11 @@ void* client_listen(void* arg){
                 *(in_data->key_found) = 1;
                 printf("original key %d\n",key);
 
-                snprintf(session_key, sizeof(session_key), "%u", key ^ (unsigned)ntohs(tmp.sin_port));
-                printf("session key (xor'd) %s\n", session_key);
-                strcpy(in_data->key,session_key);
+
+                snprintf(session_key, sizeof(session_key), "%u", key);
+
+                strcpy(in_data -> key, session_key);
+
 
                 *(in_data->key_found) = 1;
 
@@ -89,6 +95,7 @@ void* client_speak(void* arg){
                 strcat(output_request,input.client_request);
                 printf("message sent %s\n", output_request);
                 rc = udp_socket_write(*input.sd, input.server_addr, output_request, BUFFER_SIZE);
+                
                     if (rc > 0)
                     {
                         
@@ -130,6 +137,10 @@ int main(int argc, char *argv[])
     char client_request[BUFFER_SIZE], server_response[BUFFER_SIZE];
     int sd;
 
+    
+    struct sockaddr_in my_port;
+    socklen_t my_port_size = sizeof(my_port);
+
     while(client_type){
 
         printf("Select: Join as admin? y/n: \n");
@@ -156,6 +167,14 @@ int main(int argc, char *argv[])
             printf("ERROR: INVALID INPUT \n");
         }
     }
+
+    struct sockaddr_in addr;
+    socklen_t addrlen = sizeof(addr);
+
+    getsockname(sd, (struct sockaddr *)&addr, &addrlen);
+    printf("Client local UDP port = %d\n", ntohs(addr.sin_port));
+
+
 
 
 
@@ -189,6 +208,8 @@ int main(int argc, char *argv[])
 
     pthread_t listener_thread, writer_thread;
 
+    struct sockaddr_in port; 
+
 
     w_thread_in write_thread_in;
     write_thread_in.server_addr = &server_addr;
@@ -196,6 +217,7 @@ int main(int argc, char *argv[])
     write_thread_in.sd = &sd;
     write_thread_in.key_found = &key_acquired;
     write_thread_in.key = key_str;
+    write_thread_in.this_port = &port;
 
     int x = pthread_create(&writer_thread,NULL,client_speak,(void*)&write_thread_in);
     if(x != 0){

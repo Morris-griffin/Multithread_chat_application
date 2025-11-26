@@ -285,7 +285,9 @@ void* response_thread(void* arg){
 
                             //if client request is connect to chat with given name
 
-                                    if((atoi(token) ^ client_address->sin_port) != session_key){ //swap for not authorised later!!!!!!!!!!!!!!
+                                    printf("this is the key %d\n",(atoi(token)));
+                                    printf("this is the acces key %d\n", session_key);
+                                    if((atoi(token)) != session_key){
                                         if (strcmp(request_type, "conn") == 0 ){
                                             write_lock();
                                             if(find_name(*pointer_to_head_pointer,request_content)==NULL){
