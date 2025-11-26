@@ -306,6 +306,7 @@ void* response_thread(void* arg){
                                             else{
                                                 
                                                 strcpy(server_response,"ERROR: that name is already taken\n");
+                                                printf("that name is taken\n");
                                                 
                                             }
 
@@ -313,6 +314,7 @@ void* response_thread(void* arg){
                                         else{
                                             strcpy(server_response,"You are an unauthorised user - you must use conn$ to connect, set name, and get a unique access token\n");
                                         }
+                                        printf("%s\n", server_response);
                                         rc = udp_socket_write(sd, client_address, server_response, BUFFER_SIZE);
                                         write_unlock();
                                     }
@@ -423,9 +425,9 @@ void* response_thread(void* arg){
                                                     if(blocked != NULL){
                                                         strcpy(blocked -> username, request_content);
                                                         strcpy(server_response, requesting_client_node->username);
-                                                        strcat(server_response,"who is on your blocked list, has now changed name to ");
+                                                        strcat(server_response," who is on your blocked list, has now changed name to ");
                                                         strcat(server_response,request_content);
-                                                        strcat(server_response,"they will remain blocked\n");
+                                                        strcat(server_response," they will remain blocked\n");
 
                                                         rc = udp_socket_write(sd, &(tmp->addr), server_response, BUFFER_SIZE);
 

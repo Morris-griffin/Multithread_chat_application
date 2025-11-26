@@ -42,7 +42,6 @@ void* client_listen(void* arg){
         if(!*(in_data->key_found)){
             key_check = strtok(buffer,"#");
             key_num = strtok(NULL,"#");
-            printf("%s\n",buffer); 
             if(strcmp(key_check,"key") == 0){
                 key = (unsigned int) strtoul(key_num, NULL, 10);
                 printf("Acquired token\n");
@@ -58,6 +57,9 @@ void* client_listen(void* arg){
                 *(in_data->key_found) = 1;
 
 
+            }
+            else{
+                printf("%s",key_check);    
             }
 
             
