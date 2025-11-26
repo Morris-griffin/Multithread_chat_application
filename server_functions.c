@@ -296,7 +296,7 @@ void* response_thread(void* arg){
                                                 
                                                 
                                                 
-                                                strcpy(server_response,"key:");
+                                                strcpy(server_response,"key#");
                                                 char tmp[15];
                                                 snprintf(tmp, sizeof(tmp), "%u\n", session_key);
                                                 strcat(server_response,tmp);
@@ -365,6 +365,8 @@ void* response_thread(void* arg){
                                             write_lock();
                                             requesting_client_node = find_socket(*pointer_to_head_pointer,*client_address);
                                             strcpy(server_response, "session finished - see you soon!\n");
+                                            rc = udp_socket_write(sd, client_address, server_response, BUFFER_SIZE);
+                                            strcpy(server_response,"$kill$\n");
                                             rc = udp_socket_write(sd, client_address, server_response, BUFFER_SIZE);
                                             *pointer_to_head_pointer = remove_c(requesting_client_node,*pointer_to_head_pointer);
                                             write_lock();
@@ -484,6 +486,8 @@ void* response_thread(void* arg){
                                                     else{
 
                                                         strcpy(server_response,"You have been removed from the chat\n");
+                                                        rc = udp_socket_write(sd, &(kick_c->addr), server_response, BUFFER_SIZE);
+                                                        strcpy(server_response,"$kill$\n");
                                                         rc = udp_socket_write(sd, &(kick_c->addr), server_response, BUFFER_SIZE);
                                                         *pointer_to_head_pointer = remove_c(kick_c,*pointer_to_head_pointer); // this isnt working
 

@@ -40,8 +40,8 @@ void* client_listen(void* arg){
     while(1){
         int rc = udp_socket_read(*(in_data->port), &tmp, buffer, BUFFER_SIZE);
         if(!*(in_data->key_found)){
-            key_check = strtok(buffer,":");
-            key_num = strtok(NULL,":");
+            key_check = strtok(buffer,"#");
+            key_num = strtok(NULL,"#");
             printf("%s\n",buffer); 
             if(strcmp(key_check,"key") == 0){
                 key = (unsigned int) strtoul(key_num, NULL, 10);
@@ -51,6 +51,7 @@ void* client_listen(void* arg){
 
 
                 snprintf(session_key, sizeof(session_key), "%u", key);
+
 
                 strcpy(in_data -> key, session_key);
 
@@ -66,10 +67,19 @@ void* client_listen(void* arg){
             
 
         }
-        else
-        if (rc > 0){
-            printf("%s",buffer);
+        else{
+            if (rc > 0){
+                if(strcmp(buffer,"$kill$\n") == 0){
+                    *(in_data->key_found) = 0;
+                    strcpy(in_data -> key, "0");
+
+                }
+                else{
+                    printf("%s",buffer);
+                }
+            }
         }
+    
     }
     return NULL;
 }
@@ -83,6 +93,7 @@ void* client_speak(void* arg){
     while (1){
 
         fgets(input.client_request, BUFFER_SIZE, stdin);
+        printf("key_found_val is %d\n", *(input.key_found));
 
 
         // This function writes to the server (sends request) through the socket at sd.
