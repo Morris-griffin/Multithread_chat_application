@@ -47,7 +47,6 @@ void* client_listen(void* arg){
                 key = (unsigned int) strtoul(key_num, NULL, 10);
                 printf("Acquired token\n");
                 *(in_data->key_found) = 1;
-                printf("original key %d\n",key);
 
 
                 snprintf(session_key, sizeof(session_key), "%u", key);
@@ -59,9 +58,6 @@ void* client_listen(void* arg){
                 *(in_data->key_found) = 1;
 
 
-            }
-            else{
-                printf("Difficulties acquiring token\n");
             }
 
             
@@ -93,7 +89,6 @@ void* client_speak(void* arg){
     while (1){
 
         fgets(input.client_request, BUFFER_SIZE, stdin);
-        printf("key_found_val is %d\n", *(input.key_found));
 
 
         // This function writes to the server (sends request) through the socket at sd.
@@ -104,7 +99,6 @@ void* client_speak(void* arg){
                 strcpy(output_request,input.key);
                 strcat(output_request,"#");
                 strcat(output_request,input.client_request);
-                printf("message sent %s\n", output_request);
                 rc = udp_socket_write(*input.sd, input.server_addr, output_request, BUFFER_SIZE);
                 
                     if (rc > 0)
@@ -120,7 +114,6 @@ void* client_speak(void* arg){
                 strcpy(output_request,"11#");
 
                 strcat(output_request,input.client_request);
-                printf("message sent %s\n", output_request);
                 rc = udp_socket_write(*input.sd, input.server_addr, output_request, BUFFER_SIZE);
                     if (rc > 0)
                     {
@@ -179,11 +172,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    struct sockaddr_in addr;
-    socklen_t addrlen = sizeof(addr);
 
-    getsockname(sd, (struct sockaddr *)&addr, &addrlen);
-    printf("Client local UDP port = %d\n", ntohs(addr.sin_port));
 
 
 

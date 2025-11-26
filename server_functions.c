@@ -285,8 +285,6 @@ void* response_thread(void* arg){
 
                             //if client request is connect to chat with given name
 
-                                    printf("this is the key %d\n",(atoi(token)));
-                                    printf("this is the acces key %d\n", session_key);
                                     if((atoi(token)) != session_key){
                                         if (strcmp(request_type, "conn") == 0 ){
                                             write_lock();
@@ -300,12 +298,10 @@ void* response_thread(void* arg){
                                                 char tmp[15];
                                                 snprintf(tmp, sizeof(tmp), "%u\n", session_key);
                                                 strcat(server_response,tmp);
-                                                printf("%s/n",server_response);
                                                 rc = udp_socket_write(sd, client_address, server_response, BUFFER_SIZE);
                                                 strcpy(server_response,"Welcome: ");
                                                 strcat(server_response,request_content);
                                                 strcat(server_response,"\n");
-                                                printf("%s", request_content);
                                             }
                                             else{
                                                 
@@ -345,13 +341,8 @@ void* response_thread(void* arg){
                                             strcat(server_response,"\n");
                                             while(c != NULL){
                                                 if(find_name_in_blocked(c->block_list,requesting_client_node->username) == NULL){
-                                                    printf("broadcast #%d to %s:%d\n",
-                                                        i,
-                                                        inet_ntoa(c->addr.sin_addr),
-                                                        ntohs(c->addr.sin_port));
 
-                                                    rc = udp_socket_write(sd, &(c->addr), server_response, BUFFER_SIZE);
-                                                    printf("rc:  %d\n",rc);    
+                                                    rc = udp_socket_write(sd, &(c->addr), server_response, BUFFER_SIZE); 
                                                 }
 
 
@@ -541,9 +532,6 @@ void* response_thread(void* arg){
 
 
 
-                                                printf("Searching for '%s'\n",recipient_name);
-                                                printf("wanting to say '%s'\n",msg);
-
 
 
 
@@ -562,8 +550,7 @@ void* response_thread(void* arg){
                                                 }
                                                 else{
 
-                                                    printf("private message happening\n");
-                                                    printf("to %s\n",recipient_name);
+
 
 
 
