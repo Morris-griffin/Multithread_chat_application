@@ -13,7 +13,7 @@
 #define CLIENT_PORT 10000
 #define Max_name_length 30
 #define ADMIN_PORT 6666
-#define max_history 20
+#define max_history 30
 #define max_input 30
 // client code
 typedef struct interface_dimensions {
@@ -38,16 +38,28 @@ typedef struct w_thread_in{
 
 void* client_listen(void* arg){
     int sd = *(int*)arg;   // this is actually a socket descriptor, name is misleading
+    char history[max_history][BUFFER_SIZE];
     char buffer[BUFFER_SIZE];
     struct sockaddr_in tmp;
-
+    int count = 0;
     while(1){
         int rc = udp_socket_read(sd, &tmp, buffer, BUFFER_SIZE);
         if (rc > 0){
             // Just append and let ncurses scroll
-            wmove(nwindow.chat_win, nwindow.chat_height - 3, 1);
-            wprintw(nwindow.chat_win, "%s\n", buffer);
+            
+            strcpy(history[count],buffer);
+            wmove(nwindow.chat_win, count + 1, 1);
+            wprintw(nwindow.chat_win, "%s", history[count]);
+            
+
+            for(int i = 0; i < count  ; i++){
+                wmove(nwindow.chat_win, 1 +i, 1 );
+                wprintw(nwindow.chat_win, "%s", history[i]);
+
+            }
+            count++;
             wrefresh(nwindow.chat_win);
+            //wmove(nwindow.chat_win, nwindow.chat_height + 3, 1);
         }
     }
     return NULL;
@@ -78,7 +90,7 @@ void* client_speak(void* arg){
 
         // This function writes to the server (sends request) through the socket at sd.
         if(strlen(input.client_request)>1){
-            input.client_request[strlen(input.client_request)-1] = '\0';
+            input.client_request[strlen(input.client_request)] = '\0';
             rc = udp_socket_write(*input.sd, input.server_addr, input.client_request, BUFFER_SIZE); //could do strlen(client_request)
                 if (rc > 0)
                 {
@@ -99,14 +111,17 @@ int refreshw(){
     
     nodelay(nwindow.input_win, TRUE);  // once, during initialization
     int ch = wgetch(nwindow.input_win); // non-blocking read
-
-    if (ch == '\n' || ch == '\r') {
+    if (ch == ERR){
+        return 0;
+    }
+    else if (ch == '\n' || ch == '\r') {
         // User pressed Enter -> send the message
         if (nwindow.input_len > 0) {
             nwindow.input_buf[nwindow.input_len] = '\0';
             return 1;               
         }
-    } else if (ch == KEY_BACKSPACE || ch == 127 || ch == 8) {
+    } 
+    else if (ch == KEY_BACKSPACE || ch == 127 || ch == 8) {
         if (nwindow.input_len > 0) {
             nwindow.input_len--;
             nwindow.input_buf[nwindow.input_len] = '\0';
@@ -118,17 +133,26 @@ int refreshw(){
             wmove(nwindow.input_win, 1, 1 + nwindow.input_len);
             wrefresh(nwindow.input_win);
         }
-    } else if (ch == 27) { // ESC to quit, for example
+    } 
+    else if (ch == 27) { // ESC to quit, for example
         return -1; 
-    } else if (ch >= 32 && ch < 127) { // printable
+    } 
+    else if (ch >= 32 && ch < 127) { // printable
         if (nwindow.input_len < max_input - 1) {
             nwindow.input_buf[nwindow.input_len++] = (char)ch;
             waddch(nwindow.input_win, ch);
             wrefresh(nwindow.input_win);
         }
     }
-
+    else if (ch == KEY_LEFT) {
+        wrefresh(nwindow.input_win);
+        return 0;
+    } else if (ch == KEY_RIGHT){
+        wrefresh(nwindow.input_win);
+        return 0;
+    }
     return 0;
+
 }
 
 
@@ -175,18 +199,19 @@ int main(int argc, char *argv[])
     noecho();               // don't echo typed chars automatically
     keypad(stdscr, TRUE);   // enable arrow keys etc.
     curs_set(1);            // show cursor
-
-    nodelay(nwindow.input_win, TRUE);
-    keypad(nwindow.input_win, TRUE);
     
     getmaxyx(stdscr, nwindow.rows, nwindow.cols);
-
     nwindow.input_height = 3;
     nwindow.chat_height  = nwindow.rows - nwindow.input_height;
 
     // Create windows
     nwindow.chat_win = newwin(nwindow.chat_height, nwindow.cols, 0, 0);
     nwindow.input_win = newwin(nwindow.input_height, nwindow.cols, nwindow.chat_height, 0);
+    nodelay(nwindow.input_win, TRUE);
+    keypad(nwindow.input_win, TRUE);
+
+
+
 
     scrollok(nwindow.chat_win, TRUE);  // allow scrolling
     box(nwindow.chat_win, 0, 0);
