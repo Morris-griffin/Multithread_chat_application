@@ -345,7 +345,6 @@ int main(int argc, char *argv[])
     pthread_join(listener_thread, NULL);
     pthread_join(writer_thread, NULL);
 
-
     return 0;
 }
 
