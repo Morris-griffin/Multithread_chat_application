@@ -13,7 +13,6 @@
 #define CLIENT_PORT 10000
 #define Max_name_length 30
 #define ADMIN_PORT 6666
-#define max_history 30
 #define max_input 30
 // client code
 typedef struct interface_dimensions {
@@ -36,30 +35,107 @@ typedef struct w_thread_in{
     int *sd;
 }w_thread_in;
 
+typedef struct Node {
+    char data[max_input]; 
+    struct Node *next;
+} Node;
+
+typedef struct {
+    Node *head;
+    Node *tail;
+    int capacity;
+    int count;
+}fixedlist;
+
+void initlist(fixedlist *list){
+    list -> head = NULL;
+    list -> tail = NULL;
+    int w, h; 
+    getmaxyx(nwindow.chat_win, h, w);
+    list -> capacity = h- 2;
+    list -> count = 0;
+}
+
+
+Node* createNode(char* value) {
+    Node *node = malloc(sizeof(Node));
+    if (!node) {
+        perror("malloc failed");
+        exit(EXIT_FAILURE);
+    }
+    strcpy(node-> data, value);
+    node->next = NULL;
+    return node;
+}
+
+// Remove the oldest element (from the head)
+void removeOldest(fixedlist *list) {
+    if (list->head == NULL) return;
+
+    Node *temp = list->head;
+    list->head = list->head->next;
+
+    // If list becomes empty, tail must also be NULL
+    if (list->head == NULL) {
+        list->tail = NULL;
+    }
+
+    free(temp);
+    list->count--;
+
+}
+
+// Add a new element, maintaining max size of 30
+void addtolist(fixedlist *list, char* value) {
+    // If already at max size, drop the oldest
+    if (list->count == list->capacity) {
+        removeOldest(list);
+    }
+
+    Node *node = createNode(value);
+
+    if (list->tail == NULL) {
+        // List is empty
+        list->head = node;
+        list->tail = node;
+    } else {
+        list->tail->next = node;
+        list->tail = node;
+    }
+
+    list->count++;
+}
+
+// Print all elements from oldest to newest
+void printList(fixedlist *list) {
+
+    Node *curr = list->head;
+    
+    
+//    printf("List (size = %d): ", list->size);
+  
+    for (int i = 0 ; i < list->count; i++){
+        wmove(nwindow.chat_win, 1 +i, 1 );
+        wprintw(nwindow.chat_win, "%s", curr-> data);
+        curr = curr->next;
+    }
+    wmove(nwindow.chat_win, nwindow.rows - 2, 0);
+    wrefresh(nwindow.chat_win);
+}
+
 void* client_listen(void* arg){
-    int sd = *(int*)arg;   // this is actually a socket descriptor, name is misleading
-    char history[max_history][BUFFER_SIZE];
+    int sd = *(int*)arg;   // this is actually a socket descriptor
     char buffer[BUFFER_SIZE];
     struct sockaddr_in tmp;
-    int count = 0;
+    fixedlist list;
+    initlist(&list);
+    
     while(1){
         int rc = udp_socket_read(sd, &tmp, buffer, BUFFER_SIZE);
         if (rc > 0){
             // Just append and let ncurses scroll
-            
-            strcpy(history[count],buffer);
-            wmove(nwindow.chat_win, count + 1, 1);
-            wprintw(nwindow.chat_win, "%s", history[count]);
-            
-
-            for(int i = 0; i < count  ; i++){
-                wmove(nwindow.chat_win, 1 +i, 1 );
-                wprintw(nwindow.chat_win, "%s", history[i]);
-
-            }
-            count++;
-            wrefresh(nwindow.chat_win);
-            //wmove(nwindow.chat_win, nwindow.chat_height + 3, 1);
+            addtolist(&list, buffer);
+            printList(&list);            
         }
     }
     return NULL;
