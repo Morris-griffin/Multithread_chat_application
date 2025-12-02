@@ -13,7 +13,7 @@
 #define CLIENT_PORT 10000
 #define MAX_NAME_LENGTH 30
 #define ADMIN_PORT 6666
-#define MAX_INPUT 30
+#define MAX_INPUT 127
 // client code
 
 typedef struct w_thread_in{
@@ -159,7 +159,8 @@ void* client_listen(void* arg){
                 *(in_data->key_found) = 1;
             }
             else{
-                printf("%s",key_check);    
+                addtolist(&list, key_check);
+                printList(&list);
             }
         }
         else{
@@ -194,8 +195,7 @@ void* client_speak(void* arg){
             r = refreshw();
         } 
         strcpy(input.client_request, nwindow.input_buf);
-        mvwprintw(nwindow.input_win, 1, 1, " read sucessfully ");
-        wrefresh(nwindow.input_win);
+ 
  
         // This function writes to the server (sends request) through the socket at sd.
         if(*(input.key_found)){
