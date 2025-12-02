@@ -15,6 +15,8 @@
 #define BUFFER_SIZE 1024
 #define SERVER_PORT 12000
 
+int refreshw();
+
 int set_socket_addr(struct sockaddr_in *addr, const char *ip, int port);
 
 int udp_socket_open(int port);
