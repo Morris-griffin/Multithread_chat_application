@@ -10,7 +10,12 @@ int valid_input = 0 ;
 
 
 
-
+void initlist(fixedlist *list){
+    list -> head = NULL;
+    list -> tail = NULL;
+    list -> capacity = 15;
+    list -> count = 0;
+}
 
 int main(int argc, char *argv[])
 {
@@ -39,6 +44,13 @@ int main(int argc, char *argv[])
     client *requesting_client_node;
 
     int num_readers;
+
+
+    ////// FOR CHAT MEMORY
+    fixedlist listh ;
+    initlist (&listh);
+
+    ////////////////
 
     // Server main loop
     while (1) 
@@ -78,6 +90,13 @@ int main(int argc, char *argv[])
         thread_in -> pointer_to_head_pointer = pointer_to_head_pointer;
         thread_in->sd = &sd;
         thread_in->key = &key;
+        thread_in-> listh = &listh;
+//      need to pass in a pointer to a structure of type listH
+
+//        thread_in->msg_list_head = &head;
+//        thread_in->msg_list_tail = &tail;
+//        thread_in->msg_count = &msg_count;
+//        thread_in->capacity = &capacity;
 
 
         pthread_create(&t, NULL, response_thread, (void*)thread_in);

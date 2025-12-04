@@ -15,7 +15,17 @@ typedef struct block_node {
     char username[MAX_USERNAME_LEN];
     struct block_node* next;
 }block_node;
+typedef struct NodeH {
+    char data[100]; 
+    struct NodeH *next;
+} NodeH;
 
+typedef struct {
+    NodeH *head;
+    NodeH *tail;
+    int capacity;
+    int count;
+}fixedlist;
 
 
 typedef struct client {
@@ -31,7 +41,14 @@ typedef struct response_thread_struct{
     struct sockaddr_in *client_address;
     int* sd;
     int* key;
+    fixedlist *listh;
 }response_thread_struct;
+
+//    int* msg_count;
+//    int* capacity;
+//    char **msg_list_head;
+//    char **msg_list_tail;
+
 
 client* add_c (char name[], struct sockaddr_in client_address, client* last);
 client* find_name(client* head, char name[]);

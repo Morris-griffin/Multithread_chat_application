@@ -118,7 +118,60 @@ block_node* block_user(client* client_head, block_node* block_list, char name[])
 }
 
 
+NodeH* createNode(char* value) {
+    NodeH *nodeH = malloc(sizeof(NodeH));
+    if (!nodeH) {
+        perror("malloc failed");
+        exit(EXIT_FAILURE);
+    }
+    strcpy(nodeH-> data, value);
+    nodeH->next = NULL;
+    return nodeH;
+}
 
+// Remove the oldest element (from the head)
+void removeOldest(fixedlist *list) {
+    if (list->head == NULL) return;
+
+    NodeH *temp = list->head;
+    list->head = list->head->next;
+
+    // If list becomes empty, tail must also be NULL
+    if (list->head == NULL) {
+        list->tail = NULL;
+    }
+
+    free(temp);
+    list->count--;
+
+}
+
+// Add a new element, maintaining max size of 30
+void addtolist(fixedlist *list, char* name, char* message) {
+    // If already at max size, drop the oldest
+    char value [100];
+    strcpy(value, name);
+    strcat(value, ": ");
+    strcat(value, message);
+
+    printf("adding %s to history \n", value);
+    if (list->count == list->capacity) {
+        removeOldest(list);
+    }
+
+    NodeH *nodeH = createNode(value);
+
+    if (list->tail == NULL) {
+        // List is empty
+        list->head = nodeH;
+        list->tail = nodeH;
+    } else {
+        list->tail->next = nodeH;
+        list->tail = nodeH;
+    }
+    printf("countinc\n");
+    list->count++;
+}
 
 //////// for block list ///////////
 
@@ -261,6 +314,10 @@ void* response_thread(void* arg){
 
     int sd = *(thread_input->sd);
     int session_key = *(thread_input->key);
+
+    ///////////// msg history inputs
+    fixedlist *list = thread_input -> listh;
+    //////////////
     
     int rc;
 
@@ -299,6 +356,18 @@ void* response_thread(void* arg){
                                                 snprintf(tmp, sizeof(tmp), "%u\n", session_key);
                                                 strcat(server_response,tmp);
                                                 rc = udp_socket_write(sd, client_address, server_response, BUFFER_SIZE);
+                                                
+                                                //PRINT HISTORY
+                                                NodeH *curr = list -> head;
+                                                /*printf("getting there? %d \n", listH.count);*/
+                                                for (int i = 0 ; i < list -> count; i++){
+                                                    printf("history");
+                                                    strcpy(server_response, curr->data);
+                                                    strcat(server_response,"\n");
+                                                    rc = udp_socket_write(sd, client_address, server_response, BUFFER_SIZE);
+                                                    curr = curr->next;
+                                                }
+                       
                                                 strcpy(server_response,"Welcome: ");
                                                 strcat(server_response,request_content);
                                                 strcat(server_response,"\n");
@@ -352,6 +421,8 @@ void* response_thread(void* arg){
                                                 c= c->next;
                                                 i++;
                                             }
+                                            //put in list here
+                                            addtolist(list,requesting_client_node -> username, request_content);
                                             read_unlock();
                                         }
                                         else if (strcmp(request_type, "disconn") == 0){
