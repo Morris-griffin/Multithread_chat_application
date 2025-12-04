@@ -130,7 +130,7 @@ NodeH* createNode(char* value) {
 }
 
 // Remove the oldest element (from the head)
-void removeOldest(fixedlist *list) {
+void removeOldest(fixedlistH *list) {
     if (list->head == NULL) return;
 
     NodeH *temp = list->head;
@@ -147,7 +147,7 @@ void removeOldest(fixedlist *list) {
 }
 
 // Add a new element, maintaining max size of 30
-void addtolist(fixedlist *list, char* name, char* message) {
+void addtolist(fixedlistH *list, char* name, char* message) {
     // If already at max size, drop the oldest
     char value [100];
     strcpy(value, name);
@@ -316,7 +316,7 @@ void* response_thread(void* arg){
     int session_key = *(thread_input->key);
 
     ///////////// msg history inputs
-    fixedlist *list = thread_input -> listh;
+    fixedlistH *list = thread_input -> listh;
     //////////////
     
     int rc;
