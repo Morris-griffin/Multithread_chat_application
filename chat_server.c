@@ -10,7 +10,7 @@ int valid_input = 0 ;
 
 
 
-void initlist(fixedlist *list){
+void initlist(fixedlistH *list){
     list -> head = NULL;
     list -> tail = NULL;
     list -> capacity = 15;
@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
 
 
     ////// FOR CHAT MEMORY
-    fixedlist listh ;
+    fixedlistH listh ;
     initlist (&listh);
 
     ////////////////

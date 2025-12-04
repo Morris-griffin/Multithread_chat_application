@@ -25,7 +25,7 @@ typedef struct {
     NodeH *tail;
     int capacity;
     int count;
-}fixedlist;
+}fixedlistH;
 
 
 typedef struct client {
@@ -41,7 +41,7 @@ typedef struct response_thread_struct{
     struct sockaddr_in *client_address;
     int* sd;
     int* key;
-    fixedlist *listh;
+    fixedlistH *listh;
 }response_thread_struct;
 
 //    int* msg_count;

@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "server_functions.h": "c"
+        "server_functions.h": "c",
+        "in.h": "c"
     }
 }
