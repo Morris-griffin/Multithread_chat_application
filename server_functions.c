@@ -234,10 +234,18 @@ void de_all_b_list(block_node* head){
 /////////////////////////////////////////////
 /////////////////// locks ///////////////////
 /////////////////////////////////////////////
-sem_t read_sem, write_sem, write_blocker, writer_priority_block;
+sem_t read_sem, write_sem, write_blocker, writer_priority_block, h_lock;
 
 int reader_num = 0;
 int writer_num = 0;
+
+void history_lock() {
+    sem_wait(&h_lock);
+}
+
+void history_unlock() {
+    sem_post(&h_lock);
+}
 
 
 
@@ -358,6 +366,9 @@ void* response_thread(void* arg){
                                                 rc = udp_socket_write(sd, client_address, server_response, BUFFER_SIZE);
                                                 
                                                 //PRINT HISTORY
+
+                                                history_lock();
+
                                                 NodeH *curr = list -> head;
                                                 /*printf("getting there? %d \n", listH.count);*/
                                                 for (int i = 0 ; i < list -> count; i++){
@@ -367,6 +378,8 @@ void* response_thread(void* arg){
                                                     rc = udp_socket_write(sd, client_address, server_response, BUFFER_SIZE);
                                                     curr = curr->next;
                                                 }
+
+                                                history_unlock();
                        
                                                 strcpy(server_response,"Welcome: ");
                                                 strcat(server_response,request_content);
@@ -392,7 +405,7 @@ void* response_thread(void* arg){
                                         if(strcmp(request_type, "conn") == 0 ){
                                             read_lock();
                                             requesting_client_node = find_socket(*pointer_to_head_pointer,*client_address);
-                                            read_lock();
+                                            read_unlock();
 
                                             strcpy(server_response,"you are already connected as ");
                                             strcat(server_response, requesting_client_node->username);
@@ -422,7 +435,9 @@ void* response_thread(void* arg){
                                                 i++;
                                             }
                                             //put in list here
+                                            history_lock();
                                             addtolist(list,requesting_client_node -> username, request_content);
+                                            history_unlock();
                                             read_unlock();
                                         }
                                         else if (strcmp(request_type, "disconn") == 0){

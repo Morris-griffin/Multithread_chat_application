@@ -49,12 +49,12 @@ typedef struct Node {
     struct Node *next;
 } Node;
 
-typedef struct {
-    Node *head;
-    Node *tail;
-    int capacity;
-    int count;
-}fixedlist;
+    typedef struct {
+        Node *head;
+        Node *tail;
+        int capacity;
+        int count;
+    }fixedlist;
 
 void initlist(fixedlist *list){
     list -> head = NULL;
