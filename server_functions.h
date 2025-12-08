@@ -4,12 +4,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <semaphore.h>
+#include <time.h>
 
 
 #include "udp.h"
 
 #define MAX_USERNAME_LEN 32
-#define Max_clients 15
+#define MAX_CLIENTS 15
 
 typedef struct block_node {
     char username[MAX_USERNAME_LEN];
@@ -31,6 +32,8 @@ typedef struct {
 typedef struct client {
     char username[MAX_USERNAME_LEN];
     struct sockaddr_in addr;// contains IP + port
+    time_t time;
+    int heap_index;
     block_node *block_list;
     struct client* next;  
 }client;
@@ -42,7 +45,13 @@ typedef struct response_thread_struct{
     int* sd;
     int* key;
     fixedlistH *listh;
+    struct client_heap *heap;
 }response_thread_struct;
+
+typedef struct client_heap{
+    client* client_pointer[MAX_CLIENTS];
+    int connected_clients;
+} client_heap;
 
 //    int* msg_count;
 //    int* capacity;
@@ -93,5 +102,20 @@ void read_unlock();
 
 void write_lock();
 void write_unlock();
+
+
+void init_heap(client_heap* heap);
+
+
+void add_to_heap(client* c, client_heap* heap);
+
+void move_down(int index, client_heap* heap);
+
+void remove_from_heap(client_heap* heap, int index);
+
+void print_heap(client_heap* heap,int index);
+
+
+
 
 #endif

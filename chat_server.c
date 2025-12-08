@@ -51,7 +51,10 @@ int main(int argc, char *argv[])
     fixedlistH listh ;
     initlist (&listh);
 
-    ////////////////
+    ////////////////    
+    client_heap heap;
+    
+    init_heap(&heap);
 
     // Server main loop
     while (1) 
@@ -92,6 +95,7 @@ int main(int argc, char *argv[])
         thread_in->sd = &sd;
         thread_in->key = &key;
         thread_in-> listh = &listh;
+        thread_in->heap = &heap;
 //      need to pass in a pointer to a structure of type listH
 
 //        thread_in->msg_list_head = &head;
