@@ -328,6 +328,7 @@ void* response_thread(void* arg){
     //////////////
 
     client_heap *heap = thread_input->heap;
+    client_heap *pong = thread_input->pong;
 
 
     time_t current_time = time(NULL);
@@ -343,6 +344,11 @@ void* response_thread(void* arg){
     char *request_content;
 
     char server_response[BUFFER_SIZE];
+
+
+
+
+
 
     token = strtok(client_request,"#");
     
@@ -437,6 +443,14 @@ void* response_thread(void* arg){
                                             move_down(requesting_client_node->heap_index,heap);
 
 
+                                        }
+
+                                        else if(strcmp(request_type,"PONG") == 0){
+                                            printf("received pong\n");
+                                            write_lock();
+                                            requesting_client_node = find_socket(*pointer_to_head_pointer,*client_address);
+                                            remove_from_heap(pong,requesting_client_node->heap_index);
+                                            write_unlock();
                                         }
 
                                         else if (strcmp(request_type, "say") == 0){
@@ -743,21 +757,31 @@ void* response_thread(void* arg){
     }
 
 
-    while(heap->connected_clients > 0 && (current_time - (heap->client_pointer[0])->time > 20)){
+    while(heap->connected_clients > 0 && (current_time - (heap->client_pointer[0])->time > 5)){
 
-        print_heap(heap,0);
         
+        print_heap(heap,0);
 
 
-        strcpy(server_response,"You have been removed from the chat for inactivity\n");
+        strcpy(server_response, "$ping$\n");
         rc = udp_socket_write(sd, &((heap->client_pointer[0])->addr), server_response, BUFFER_SIZE);
-        strcpy(server_response,"$kill$\n");
-        rc = udp_socket_write(sd, &((heap->client_pointer[0])->addr), server_response, BUFFER_SIZE);
-        *pointer_to_head_pointer = remove_c((heap->client_pointer[0]),*pointer_to_head_pointer); // this isnt working
+
+        add_to_heap((heap->client_pointer[0]),pong);
 
         remove_from_heap(heap,0);
 
     }
+
+    while(pong->connected_clients > 0 && (current_time - (pong->client_pointer[0])->time > 10)){
+
+        
+        *pointer_to_head_pointer = remove_c((pong->client_pointer[0]),*pointer_to_head_pointer); // this isnt working
+
+        printf("user - disconnected\n");
+
+        remove_from_heap(pong,0);
+
+    }    
 
 
 
@@ -771,6 +795,8 @@ void* response_thread(void* arg){
 }
 
 
+
+
 //client heap
 void init_heap(client_heap* heap){
     for(int i = 0; i < heap->connected_clients; i++){
@@ -781,12 +807,15 @@ void init_heap(client_heap* heap){
 }
 
 
+
+
 void add_to_heap(client* c, client_heap* heap){
     printf("adding value to heap\n");
     int index = heap -> connected_clients;
     (heap -> client_pointer)[index] = c;
     c->heap_index = index;
     heap -> connected_clients++;
+    print_heap(heap,0);
 }
 
 void move_down(int index, client_heap* heap){
@@ -796,12 +825,14 @@ void move_down(int index, client_heap* heap){
     client* parent = (heap->client_pointer)[index];
     client* l_child = NULL;
     client* r_child = NULL;
-    if(l_child_index<MAX_CLIENTS){
+    if(l_child_index < heap->connected_clients && heap->client_pointer[l_child_index] != NULL){
         l_child = (heap->client_pointer)[l_child_index];
     }
-    if(r_child_index<MAX_CLIENTS){
+    if(r_child_index < heap->connected_clients && heap->client_pointer[r_child_index] != NULL){
         r_child = (heap->client_pointer)[r_child_index];
     }
+
+    printf("r_index\n");
 
 
     client* swap_child;
@@ -809,25 +840,19 @@ void move_down(int index, client_heap* heap){
 
 
     if(l_child == NULL && r_child == NULL){
+        printf("no children\n");
         return;
     }
 
-    if(l_child != NULL && r_child == NULL){
-        swap_child = l_child;
-    }
-    else if(l_child == NULL && r_child != NULL){
-        swap_child = r_child;
-    }
-    else if(l_child->time < r_child->time){
-        swap_child = l_child;
-    }
-    else if(r_child->time < l_child->time){
-        swap_child = r_child;
-    }
+if (l_child != NULL && (r_child == NULL || (r_child != NULL && l_child->time < r_child->time)))
+    swap_child = l_child;
+else
+    swap_child = r_child;
 
-    else{
-        swap_child = r_child;
-    }
+
+    printf("swap_child defined\n");
+
+    if (swap_child == NULL || parent == NULL) return;
 
     if((swap_child -> time) < (parent -> time)){
         int child_index = swap_child -> heap_index;
@@ -850,13 +875,21 @@ void move_down(int index, client_heap* heap){
     
     }
 
-
+printf("success\n");
 
 }
 
 void remove_from_heap(client_heap* heap, int index){
     printf("removing from heap\n");
     int last_child = heap->connected_clients-1;
+
+    if (index == last_child) {
+        heap->client_pointer[index] = NULL;
+        heap->connected_clients--;
+        return;
+    }
+
+
     (heap->client_pointer)[index] = (heap->client_pointer)[last_child];
     (heap->client_pointer)[index] -> heap_index = index;
     (heap->client_pointer)[last_child] = NULL;
@@ -875,11 +908,15 @@ void remove_from_heap(client_heap* heap, int index){
 }
 
 void print_heap(client_heap* heap,int index){
-    if(index < MAX_CLIENTS && (heap->client_pointer)[index] != NULL){
+
+    printf("trying to print\n");
+
+if(index >= heap->connected_clients) return;
+if(heap->client_pointer[index] == NULL) return;
+
         printf("%s",((heap->client_pointer)[index])->username);
         print_heap(heap,2*index+1);
         print_heap(heap,2*index+2);
-    }
 }
 
 

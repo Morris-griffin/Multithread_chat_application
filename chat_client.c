@@ -26,6 +26,7 @@ typedef struct w_thread_in{
 }w_thread_in;
 
 typedef struct l_thread_in{
+    struct sockaddr_in *server_addr;
     int* port;
     int* key_found;
     char* key;
@@ -145,6 +146,7 @@ void* client_listen(void* arg){
     char session_key[15];
     fixedlist list;
     initlist(&list);
+    char output_request[BUFFER_SIZE];
     while(1){
         int rc = udp_socket_read(*(in_data->port), &tmp, buffer, BUFFER_SIZE);
         if(!*(in_data->key_found)){
@@ -169,6 +171,13 @@ void* client_listen(void* arg){
                     *(in_data->key_found) = 0;
                     strcpy(in_data -> key, "0");
 
+                }
+                else if(strcmp(buffer, "$ping$\n") == 0){
+                    sprintf(output_request, "%u", key);
+                    strcat(output_request,"#");
+                    strcat(output_request,"PONG$xxx\n");
+                    rc = udp_socket_write(*(in_data->port), in_data->server_addr, output_request, BUFFER_SIZE);
+                    
                 }
                 else{
                     addtolist(&list, buffer);
@@ -404,6 +413,7 @@ int main(int argc, char *argv[])
     listen_input.port = &sd;
     listen_input.key_found = &key_acquired;
     listen_input.key = key_str;
+    listen_input.server_addr = &server_addr;
     x = pthread_create(&listener_thread,NULL,client_listen,(void*)&listen_input);
     if(x != 0){
         printf("listener thread creation failed\n");

@@ -53,8 +53,12 @@ int main(int argc, char *argv[])
 
     ////////////////    
     client_heap heap;
+
+    client_heap pong_heap;
     
     init_heap(&heap);
+
+    init_heap(&pong_heap);
 
     // Server main loop
     while (1) 
@@ -96,6 +100,7 @@ int main(int argc, char *argv[])
         thread_in->key = &key;
         thread_in-> listh = &listh;
         thread_in->heap = &heap;
+        thread_in->pong = &pong_heap;
 //      need to pass in a pointer to a structure of type listH
 
 //        thread_in->msg_list_head = &head;

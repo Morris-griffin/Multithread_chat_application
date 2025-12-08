@@ -46,6 +46,7 @@ typedef struct response_thread_struct{
     int* key;
     fixedlistH *listh;
     struct client_heap *heap;
+    struct client_heap *pong;
 }response_thread_struct;
 
 typedef struct client_heap{
