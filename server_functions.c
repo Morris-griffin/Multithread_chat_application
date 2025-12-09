@@ -449,7 +449,11 @@ void* response_thread(void* arg){
                                             printf("received pong\n");
                                             write_lock();
                                             requesting_client_node = find_socket(*pointer_to_head_pointer,*client_address);
+                                            printf("adding after pong\n");
+                                            requesting_client_node->time = current_time;
                                             remove_from_heap(pong,requesting_client_node->heap_index);
+                                            add_to_heap((requesting_client_node),heap);
+                                            
                                             write_unlock();
                                         }
 
@@ -759,8 +763,10 @@ void* response_thread(void* arg){
 
     while(heap->connected_clients > 0 && (current_time - (heap->client_pointer[0])->time > 5)){
 
+        printf("pinging user--------------------------------------------------------------\n");
+
         
-        print_heap(heap,0);
+        //print_heap(heap,0);
 
 
         strcpy(server_response, "$ping$\n");
@@ -815,7 +821,7 @@ void add_to_heap(client* c, client_heap* heap){
     (heap -> client_pointer)[index] = c;
     c->heap_index = index;
     heap -> connected_clients++;
-    print_heap(heap,0);
+    //print_heap(heap,0);
 }
 
 void move_down(int index, client_heap* heap){
