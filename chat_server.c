@@ -24,6 +24,7 @@ int main(int argc, char *argv[])
     sem_init(&write_blocker, 0, 1);
     sem_init(&writer_priority_block, 0,1 );
     sem_init(&h_lock,0,1);
+    sem_init(&heaps_lock, 0,1 );
     client** pointer_to_head_pointer = malloc(sizeof(client*));
     *pointer_to_head_pointer = NULL;
     

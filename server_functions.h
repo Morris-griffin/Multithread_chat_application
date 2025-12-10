@@ -93,7 +93,7 @@ void de_all_b_list(block_node* head);
 
 ////////// locks ///////
 
-extern sem_t read_sem, write_sem, write_blocker, writer_priority_block, h_lock;
+extern sem_t read_sem, write_sem, write_blocker, writer_priority_block, h_lock, heaps_lock;
 extern int reader_num;
 extern int writer_num;
 
