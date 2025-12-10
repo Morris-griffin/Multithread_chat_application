@@ -451,8 +451,11 @@ void* response_thread(void* arg){
                                             requesting_client_node = find_socket(*pointer_to_head_pointer,*client_address);
                                             printf("adding after pong\n");
                                             requesting_client_node->time = current_time;
+                                            printf("succesfully put new time stamp\n");
                                             remove_from_heap(pong,requesting_client_node->heap_index);
+                                            printf("succesfully removed from pong\n"); 
                                             add_to_heap((requesting_client_node),heap);
+                                            printf("pong add success\n");
                                             
                                             write_unlock();
                                         }
@@ -632,7 +635,7 @@ void* response_thread(void* arg){
                                                         strcpy(server_response,"$kill$\n");
                                                         rc = udp_socket_write(sd, &(kick_c->addr), server_response, BUFFER_SIZE);
                                                         remove_from_heap(heap,kick_c->heap_index);
-                                                        *pointer_to_head_pointer = remove_c(kick_c,*pointer_to_head_pointer); // this isnt working
+                                                        *pointer_to_head_pointer = remove_c(kick_c,*pointer_to_head_pointer);
 
 
 
@@ -763,7 +766,7 @@ void* response_thread(void* arg){
 
     while(heap->connected_clients > 0 && (current_time - (heap->client_pointer[0])->time > 5)){
 
-        printf("pinging user--------------------------------------------------------------\n");
+        printf("pinging user %s\n",(heap->client_pointer[0])->username);
 
         
         //print_heap(heap,0);
@@ -772,6 +775,8 @@ void* response_thread(void* arg){
         strcpy(server_response, "$ping$\n");
         rc = udp_socket_write(sd, &((heap->client_pointer[0])->addr), server_response, BUFFER_SIZE);
 
+        (heap->client_pointer[0])->time = current_time;
+
         add_to_heap((heap->client_pointer[0]),pong);
 
         remove_from_heap(heap,0);
@@ -779,13 +784,18 @@ void* response_thread(void* arg){
     }
 
     while(pong->connected_clients > 0 && (current_time - (pong->client_pointer[0])->time > 10)){
+        printf("removoving %s for inactivity\n", (pong->client_pointer[0])->username);
+        client* tmp = (pong->client_pointer[0]);
+        
+        remove_from_heap(pong,0);
+        
+        *pointer_to_head_pointer = remove_c(tmp,*pointer_to_head_pointer); // this isnt working
 
         
-        *pointer_to_head_pointer = remove_c((pong->client_pointer[0]),*pointer_to_head_pointer); // this isnt working
-
+        
         printf("user - disconnected\n");
 
-        remove_from_heap(pong,0);
+
 
     }    
 
