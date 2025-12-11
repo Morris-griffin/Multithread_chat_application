@@ -170,6 +170,9 @@ void* client_listen(void* arg){
                 if(strcmp(buffer,"$kill$\n") == 0){
                     *(in_data->key_found) = 0;
                     strcpy(in_data -> key, "0");
+                    close(*(in_data->port));
+                    endwin();
+                    exit(0);
 
                 }
                 else if(strcmp(buffer, "$ping$\n") == 0){
