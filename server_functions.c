@@ -365,12 +365,17 @@ void* response_thread(void* arg){
 
 
 
-
     token = strtok(client_request,"#");
     
     request_type = strtok(NULL, "$");
             
     request_content = strtok(NULL, "$");
+
+
+    request_type = whitespace_trim(request_type);
+    if(request_content != NULL){
+        request_content = whitespace_trim(request_content);
+    }
 
     if(request_type!=NULL){
 
@@ -1066,6 +1071,26 @@ void remove_from_heap(client_heap* heap, int index){
 
 
 
+}
+
+
+char* whitespace_trim(char* start){
+    int i = 0;
+    int j = strlen(start) - 1;
+
+
+    while(start[i] == ' '){
+        i++;
+    }
+
+    while(start[j] == ' ' && j >= i){
+        start[j] = '\0';
+        j--;
+    }
+
+
+
+    return &start[i];
 }
 
 

@@ -115,6 +115,7 @@ void move_down(int index, client_heap* heap);
 void remove_from_heap(client_heap* heap, int index);
 
 void print_heap(client_heap* heap,int index);
+char* whitespace_trim(char* start);
 
 
 
