@@ -154,7 +154,6 @@ void addtolist(fixedlistH *list, char* name, char* message) {
     strcat(value, ": ");
     strcat(value, message);
 
-    printf("adding %s to history \n", value);
     if (list->count == list->capacity) {
         removeOldest(list);
     }
@@ -169,7 +168,6 @@ void addtolist(fixedlistH *list, char* name, char* message) {
         list->tail->next = nodeH;
         list->tail = nodeH;
     }
-    printf("countinc\n");
     list->count++;
 }
 
@@ -400,7 +398,6 @@ void* response_thread(void* arg){
                                                 NodeH *curr = list -> head;
                                                 /*printf("getting there? %d \n", listH.count);*/
                                                 for (int i = 0 ; i < list -> count; i++){
-                                                    printf("history");
                                                     strcpy(server_response, curr->data);
                                                     strcat(server_response,"\n");
                                                     rc = udp_socket_write(sd, client_address, server_response, BUFFER_SIZE);
@@ -412,23 +409,28 @@ void* response_thread(void* arg){
 
                                                 ////
                        
-                                                strcpy(server_response,"Welcome: ");
-                                                strcat(server_response,request_content);
-                                                strcat(server_response,"\n");
+                                                strcpy(server_response,request_content);
+                                                strcat(server_response," has joined the chat, welcome!\n");
+                                                
+                                                client* c = *pointer_to_head_pointer;
+
+                                                while(c != NULL){
+
+                                                    rc = udp_socket_write(sd, &(c->addr), server_response, BUFFER_SIZE); 
+                                                    c= c->next;
+                                                }
                                             }
                                             else{
                                                 
                                                 strcpy(server_response,"ERROR: that name is already taken\n");
-                                                printf("that name is taken\n");
                                                 
                                             }
 
                                         }
                                         else{
                                             strcpy(server_response,"You are an unauthorised user - you must use conn$ to connect, set name, and get a unique access token\n");
+                                            rc = udp_socket_write(sd, client_address, server_response, BUFFER_SIZE);
                                         }
-                                        printf("%s\n", server_response);
-                                        rc = udp_socket_write(sd, client_address, server_response, BUFFER_SIZE);
                                         write_unlock();
                                     }
                                     else{
@@ -466,18 +468,13 @@ void* response_thread(void* arg){
                                         }
 
                                         else if(strcmp(request_type,"PONG") == 0){
-                                            printf("received pong\n");
                                             write_lock();
                                             requesting_client_node = find_socket(*pointer_to_head_pointer,*client_address);
-                                            printf("adding after pong\n");
                                             requesting_client_node->time = current_time;
-                                            printf("succesfully put new time stamp\n");
                                             heap_lock();
                                             remove_from_heap(pong,requesting_client_node->heap_index);
-                                            printf("succesfully removed from pong\n"); 
                                             add_to_heap((requesting_client_node),heap);
                                             heap_unlock();
-                                            printf("pong add success\n");
                                             
                                             write_unlock();
                                         }
@@ -520,10 +517,27 @@ void* response_thread(void* arg){
                                             heap_unlock();
                                         }
                                         else if (strcmp(request_type, "disconn") == 0){
+
                                             write_lock();
+
+
+
+
+
+
+                                            
                                             requesting_client_node = find_socket(*pointer_to_head_pointer,*client_address);
-                                            strcpy(server_response, "session finished - see you soon!\n");
-                                            rc = udp_socket_write(sd, client_address, server_response, BUFFER_SIZE);
+
+                                            client* c = *pointer_to_head_pointer;
+
+                                            strcpy(server_response,requesting_client_node->username);
+                                            strcat(server_response," has left the chat.\n");
+
+                                            while(c != NULL){
+
+                                                rc = udp_socket_write(sd, &(c->addr), server_response, BUFFER_SIZE); 
+                                                c= c->next;
+                                            }
                                             strcpy(server_response,"$kill$\n");
                                             rc = udp_socket_write(sd, client_address, server_response, BUFFER_SIZE);
                                             heap_lock();
@@ -603,21 +617,13 @@ void* response_thread(void* arg){
                                                 block_node* blocked;
 
                                                 while(tmp != NULL){
-                                                    blocked = find_name_in_blocked(tmp->block_list,requesting_client_node->username);
 
-                                                    if(blocked != NULL){
-                                                        strcpy(blocked -> username, request_content);
                                                         strcpy(server_response, requesting_client_node->username);
-                                                        strcat(server_response," who is on your blocked list, has now changed name to ");
+                                                        strcat(server_response," has changed name to ");
                                                         strcat(server_response,request_content);
-                                                        strcat(server_response," they will remain blocked\n");
+                                                        strcat(server_response,"\n");
 
                                                         rc = udp_socket_write(sd, &(tmp->addr), server_response, BUFFER_SIZE);
-
-
-
-
-                                                    }
 
 
 
@@ -625,22 +631,15 @@ void* response_thread(void* arg){
                                                     tmp = tmp->next;
                                                 }
 
-
-
-
-
-
-                                                strcpy(requesting_client_node->username, request_content);
-                                                strcpy(server_response,"You are now called: ");
-                                                strcat(server_response,request_content);
-                                                strcat(server_response,"\n");
+                                                strcpy(requesting_client_node -> username, request_content);
                                             }
                                             else{
                                                 strcpy(server_response,"ERROR: that name is already taken\n");
+                                                rc = udp_socket_write(sd, client_address, server_response, BUFFER_SIZE);
 
                                             }
                                             
-                                            rc = udp_socket_write(sd, client_address, server_response, BUFFER_SIZE);
+                                            
                                            
                                             requesting_client_node -> time = current_time;
 
@@ -686,7 +685,9 @@ void* response_thread(void* arg){
 
 
                                                         strcpy(server_response,request_content);
-                                                        strcat(server_response," has been removed from the chat\n");
+                                                        strcat(server_response," has been removed from the chat by ");
+                                                        strcat(server_response,requesting_client_node->username);
+                                                        strcat(server_response,".\n");
 
                                                         while(c != NULL){
                                                             rc = udp_socket_write(sd, &(c->addr), server_response, BUFFER_SIZE);
@@ -742,15 +743,15 @@ void* response_thread(void* arg){
 
                                                 found = find_name(*pointer_to_head_pointer,recipient_name);
                                                 if(strcmp(recipient_name,requesting_client_node->username) == 0){
-                                                    strcpy(server_response, "cant private messag yourself\n");
+                                                    strcpy(server_response, "ERROR: can't private message yourself.\n");
                                                     rc = udp_socket_write(sd, &(requesting_client_node->addr), server_response, BUFFER_SIZE);
                                                 }
                                                 else if(found == NULL){
-                                                    strcpy(server_response,"ERROR: user not found\n");
+                                                    strcpy(server_response,"ERROR: user not found.\n");
                                                     rc = udp_socket_write(sd, &(requesting_client_node->addr), server_response, BUFFER_SIZE);
                                                 }
                                                 else if (find_name_in_blocked(found->block_list,requesting_client_node->username) != NULL){
-                                                    strcpy(server_response, "This user has blocked you\n");
+                                                    strcpy(server_response, "This user has blocked you.\n");
                                                     rc = udp_socket_write(sd, &(requesting_client_node->addr), server_response, BUFFER_SIZE);
                                                 }
                                                 else{
@@ -810,7 +811,7 @@ void* response_thread(void* arg){
             //rc = udp_socket_write(sd, &client_address, server_response, BUFFER_SIZE);
     }
     else{
-        strcpy(server_response, "ERROR: You do not have acces token, start your conection request with conn$\n");
+        strcpy(server_response, "ERROR: You do not have access token, start your conection request with conn$\n");
         rc = udp_socket_write(sd, client_address, server_response, BUFFER_SIZE);
         
 
@@ -818,10 +819,9 @@ void* response_thread(void* arg){
     }
 
     heap_lock();
-    while(heap->connected_clients > 0 && (current_time - (heap->client_pointer[0])->time > 5)){
+    while(heap->connected_clients > 0 && (current_time - (heap->client_pointer[0])->time > 180)){
 
         read_lock();
-        printf("pinging user %s\n",(heap->client_pointer[0])->username);
 
         
         //print_heap(heap,0);
@@ -843,12 +843,11 @@ void* response_thread(void* arg){
 
     }
 
-    while(pong->connected_clients > 0 && (current_time - (pong->client_pointer[0])->time > 10)){
+    while(pong->connected_clients > 0 && (current_time - (pong->client_pointer[0])->time > 20)){
         
         
         read_lock();
         
-        printf("removoving %s for inactivity\n", (pong->client_pointer[0])->username);
         client* tmp = (pong->client_pointer[0]);
 
         read_unlock();
@@ -861,7 +860,6 @@ void* response_thread(void* arg){
 
         write_unlock();
         
-        printf("user - disconnected\n");
 
 
 
@@ -895,7 +893,6 @@ void init_heap(client_heap* heap){
 
 
 void add_to_heap(client* c, client_heap* heap){
-    printf("adding value to heap\n");
     int index = heap -> connected_clients;
     (heap -> client_pointer)[index] = c;
     c->heap_index = index;
@@ -904,7 +901,6 @@ void add_to_heap(client* c, client_heap* heap){
 }
 
 void move_down(int index, client_heap* heap){
-    printf("moving elements\n");
     int l_child_index = 2 * index + 1; 
     int r_child_index = 2 * index + 2;
     client* parent = (heap->client_pointer)[index];
@@ -917,7 +913,6 @@ void move_down(int index, client_heap* heap){
         r_child = (heap->client_pointer)[r_child_index];
     }
 
-    printf("r_index\n");
 
 
     client* swap_child;
@@ -925,7 +920,6 @@ void move_down(int index, client_heap* heap){
 
 
     if(l_child == NULL && r_child == NULL){
-        printf("no children\n");
         return;
     }
 
@@ -935,7 +929,6 @@ else
     swap_child = r_child;
 
 
-    printf("swap_child defined\n");
 
     if (swap_child == NULL || parent == NULL) return;
 
@@ -960,12 +953,10 @@ else
     
     }
 
-printf("success\n");
 
 }
 
 void remove_from_heap(client_heap* heap, int index){
-    printf("removing from heap\n");
     int last_child = heap->connected_clients-1;
 
     if (index == last_child) {
@@ -992,17 +983,6 @@ void remove_from_heap(client_heap* heap, int index){
 
 }
 
-void print_heap(client_heap* heap,int index){
-
-    printf("trying to print\n");
-
-if(index >= heap->connected_clients) return;
-if(heap->client_pointer[index] == NULL) return;
-
-        printf("%s",((heap->client_pointer)[index])->username);
-        print_heap(heap,2*index+1);
-        print_heap(heap,2*index+2);
-}
 
 
 

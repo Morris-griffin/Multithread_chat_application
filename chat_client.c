@@ -322,9 +322,23 @@ int main(int argc, char *argv[])
         // (See details of the function in udp.h)
 
         if(strcmp(client_request,"y\n")==0){
-            client_type=0;
-            sd = udp_socket_open(ADMIN_PORT);
-            printf("Loaded as admin client, you can kick people, now connect with conn$ \n");
+            printf("Enter admin password (its admin):\n");
+            fgets(client_request, BUFFER_SIZE, stdin);
+            if(strcmp(client_request,"admin\n") == 0){
+            
+                
+                client_type=0;
+                sd = udp_socket_open(ADMIN_PORT);
+
+                
+
+                printf("Loaded as admin client, you can kick people, now connect with conn$ \n");
+
+            }
+
+            else{
+                printf("Incorrect\n");
+            }
 
         }
         else if(strcmp(client_request,"n\n") == 0){
