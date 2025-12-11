@@ -37,7 +37,6 @@ typedef struct interface_dimensions {
     int chat_height ;
     WINDOW *chat_win;
     WINDOW *input_win;
-    // Input buffer
     char input_buf[MAX_INPUT];
     int input_len;
     int fd_stdin;
@@ -78,7 +77,7 @@ Node* createNode(char* value) {
     return node;
 }
 
-// Remove the oldest element (from the head)
+// Remove the oldest element from the head
 void removeOldest(fixedlist *list) {
     if (list->head == NULL) return;
 
@@ -97,7 +96,6 @@ void removeOldest(fixedlist *list) {
 
 // Add a new element, maintaining max size of 30
 void addtolist(fixedlist *list, char* value) {
-    // If already at max size, drop the oldest
     if (list->count == list->capacity) {
         removeOldest(list);
     }
@@ -121,9 +119,6 @@ void printList(fixedlist *list) {
 
     Node *curr = list->head;
     
-    
-//    printf("List (size = %d): ", list->size);
-  
     for (int i = 0 ; i < list->count; i++){
         wmove(nwindow.chat_win, 1 +i, 1 );
         wprintw(nwindow.chat_win, "%s", curr-> data);
@@ -154,7 +149,6 @@ void* client_listen(void* arg){
             key_num = strtok(NULL,"#");
             if(strcmp(key_check,"key") == 0){
                 key = (unsigned int) strtoul(key_num, NULL, 10);
-                //printf("Acquired token\n");
                 *(in_data->key_found) = 1;
                 snprintf(session_key, sizeof(session_key), "%u", key);
                 strcpy(in_data -> key, session_key);
@@ -213,7 +207,6 @@ void* client_speak(void* arg){
         if(*(input.key_found)){
  
             if(strlen(input.client_request)>1){
-                //input.client_request[strlen(input.client_request)-1] = '\0';
                 strcpy(output_request,input.key);
                 strcat(output_request,"#");
                 strcat(output_request,input.client_request);
@@ -235,7 +228,6 @@ void* client_speak(void* arg){
         } 
         else{
             if(strlen(input.client_request)>1){
-              //  input.client_request[strlen(input.client_request)-1] = '\0';
                 strcpy(output_request,"11#");
 
                 strcat(output_request,input.client_request);
@@ -257,13 +249,12 @@ void* client_speak(void* arg){
 }
 int refreshw(){
     
-    nodelay(nwindow.input_win, FALSE);  // once, during initialization
-    int ch = wgetch(nwindow.input_win); // non-blocking read
+    nodelay(nwindow.input_win, FALSE);  
+    int ch = wgetch(nwindow.input_win); 
     if (ch == ERR){
         return 0;
     }
     else if (ch == '\n' || ch == '\r') {
-        // User pressed Enter -> send the message
         if (nwindow.input_len > 0) {
             nwindow.input_buf[nwindow.input_len] = '\0';
             return 1;               
@@ -282,10 +273,10 @@ int refreshw(){
             wrefresh(nwindow.input_win);
         }
     } 
-    else if (ch == 27) { // ESC to quit, for example
+    else if (ch == 27) { 
         return -1; 
     } 
-    else if (ch >= 32 && ch < 127) { // printable
+    else if (ch >= 32 && ch < 127) {
         if (nwindow.input_len < MAX_INPUT - 1) {
             nwindow.input_buf[nwindow.input_len++] = (char)ch;
             waddch(nwindow.input_win, ch);
@@ -355,17 +346,17 @@ int main(int argc, char *argv[])
         }
     }
 
-    initscr();              // start ncurses
-    cbreak();               // no line buffering
-    noecho();               // don't echo typed chars automatically
-    keypad(stdscr, TRUE);   // enable arrow keys etc.
-    curs_set(1);            // show cursor
+    initscr(); // start ncurses
+    cbreak(); // no line buffering
+    noecho(); // don't echo typed chars automatically
+    keypad(stdscr, TRUE); // enable arrow keys etc.
+    curs_set(1); // show cursor
     
     getmaxyx(stdscr, nwindow.rows, nwindow.cols);
     nwindow.input_height = 3;
     nwindow.chat_height  = nwindow.rows - nwindow.input_height;
 
-    // Create windows
+    // create windows
     nwindow.chat_win = newwin(nwindow.chat_height, nwindow.cols, 0, 0);
     nwindow.input_win = newwin(nwindow.input_height, nwindow.cols, nwindow.chat_height, 0);
     nodelay(nwindow.input_win, TRUE);
