@@ -617,13 +617,19 @@ void* response_thread(void* arg){
                                                 block_node* blocked;
 
                                                 while(tmp != NULL){
+                                                    blocked = find_name_in_blocked(tmp->block_list,requesting_client_node->username);
 
-                                                        strcpy(server_response, requesting_client_node->username);
-                                                        strcat(server_response," has changed name to ");
-                                                        strcat(server_response,request_content);
-                                                        strcat(server_response,"\n");
+                                                    if(blocked != NULL){
+                                                        strcpy(blocked -> username, request_content);
+                                                    }
 
-                                                        rc = udp_socket_write(sd, &(tmp->addr), server_response, BUFFER_SIZE);
+                                                    strcpy(server_response, requesting_client_node->username);
+                                                    strcat(server_response," has now changed name to ");
+                                                    strcat(server_response,request_content);
+                                                    strcat(server_response,", if they were on your mute list, they will remain muted\n");
+
+                                                    rc = udp_socket_write(sd, &(tmp->addr), server_response, BUFFER_SIZE);
+
 
 
 
@@ -631,8 +637,29 @@ void* response_thread(void* arg){
                                                     tmp = tmp->next;
                                                 }
 
-                                                strcpy(requesting_client_node -> username, request_content);
+
+                                                strcpy(requesting_client_node->username,request_content);
+
                                             }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
                                             else{
                                                 strcpy(server_response,"ERROR: that name is already taken\n");
                                                 rc = udp_socket_write(sd, client_address, server_response, BUFFER_SIZE);
