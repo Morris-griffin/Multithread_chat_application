@@ -1,12 +1,9 @@
 #ifndef _server_
 #define _server_
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <semaphore.h>
 #include <time.h>
-
-
 #include "udp.h"
 
 #define MAX_USERNAME_LEN 32
@@ -31,7 +28,7 @@ typedef struct {
 
 typedef struct client {
     char username[MAX_USERNAME_LEN];
-    struct sockaddr_in addr;// contains IP + port
+    struct sockaddr_in addr;
     time_t time;
     int heap_index;
     block_node *block_list;
@@ -54,12 +51,6 @@ typedef struct client_heap{
     int connected_clients;
 } client_heap;
 
-//    int* msg_count;
-//    int* capacity;
-//    char **msg_list_head;
-//    char **msg_list_tail;
-
-
 client* add_c (char name[], struct sockaddr_in client_address, client* last);
 client* find_name(client* head, char name[]);
 client* find_node_before_c(client* head, client* c);
@@ -69,12 +60,6 @@ void print_all_connected(client* head);
 client* find_socket(client* head, struct sockaddr_in addr);
 
 void* response_thread(void* arg);
-
-
-
-
-
-
 
 
 //////// for block list ///////////
