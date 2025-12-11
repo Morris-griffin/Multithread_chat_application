@@ -147,12 +147,21 @@ void removeOldest(fixedlistH *list) {
 }
 
 // Add a new element, maintaining max size of 30
-void addtolist(fixedlistH *list, char* name, char* message) {
+void addtolist(fixedlistH *list, char* name, char* message, int announcement) {
     // If already at max size, drop the oldest
+
     char value [100];
-    strcpy(value, name);
-    strcat(value, ": ");
-    strcat(value, message);
+    if(!announcement){
+        strcpy(value, name);
+        strcat(value, ": ");
+        strcat(value, message);
+    }
+    else{
+        strcpy(value,message);
+
+
+
+    }
 
     if (list->count == list->capacity) {
         removeOldest(list);
@@ -408,9 +417,16 @@ void* response_thread(void* arg){
 
 
                                                 ////
+
+                                                strcpy(server_response,"------------------------------------\n");
+                                                rc = udp_socket_write(sd, client_address, server_response, BUFFER_SIZE);
                        
                                                 strcpy(server_response,request_content);
                                                 strcat(server_response," has joined the chat, welcome!\n");
+
+                                                history_lock();
+                                                addtolist(list,NULL, server_response,1);
+                                                history_unlock();
                                                 
                                                 client* c = *pointer_to_head_pointer;
 
@@ -423,6 +439,9 @@ void* response_thread(void* arg){
                                             else{
                                                 
                                                 strcpy(server_response,"ERROR: that name is already taken\n");
+                                                rc = udp_socket_write(sd, client_address, server_response, BUFFER_SIZE); 
+                                                
+
                                                 
                                             }
 
@@ -502,7 +521,7 @@ void* response_thread(void* arg){
                                             }
                                             //put in list here
                                             history_lock();
-                                            addtolist(list,requesting_client_node -> username, request_content);
+                                            addtolist(list,requesting_client_node -> username, request_content,0);
                                             history_unlock();
                                                                                         
 
@@ -532,6 +551,10 @@ void* response_thread(void* arg){
 
                                             strcpy(server_response,requesting_client_node->username);
                                             strcat(server_response," has left the chat.\n");
+
+                                            history_lock();
+                                            addtolist(list,NULL, server_response,1);
+                                            history_unlock();
 
                                             while(c != NULL){
 
@@ -637,6 +660,10 @@ void* response_thread(void* arg){
                                                     tmp = tmp->next;
                                                 }
 
+                                                history_lock();
+                                                addtolist(list,NULL, server_response,1);
+                                                history_unlock();
+
 
                                                 strcpy(requesting_client_node->username,request_content);
 
@@ -715,6 +742,10 @@ void* response_thread(void* arg){
                                                         strcat(server_response," has been removed from the chat by ");
                                                         strcat(server_response,requesting_client_node->username);
                                                         strcat(server_response,".\n");
+
+                                                        history_lock();
+                                                        addtolist(list,NULL, server_response,1);
+                                                        history_unlock();
 
                                                         while(c != NULL){
                                                             rc = udp_socket_write(sd, &(c->addr), server_response, BUFFER_SIZE);
@@ -846,7 +877,7 @@ void* response_thread(void* arg){
     }
 
     heap_lock();
-    while(heap->connected_clients > 0 && (current_time - (heap->client_pointer[0])->time > 180)){
+    while(heap->connected_clients > 0 && (current_time - (heap->client_pointer[0])->time > 30)){
 
         read_lock();
 
@@ -870,10 +901,37 @@ void* response_thread(void* arg){
 
     }
 
-    while(pong->connected_clients > 0 && (current_time - (pong->client_pointer[0])->time > 20)){
-        
+    while(pong->connected_clients > 0 && (current_time - (pong->client_pointer[0])->time > 5)){
         
         read_lock();
+        
+        client* c = *pointer_to_head_pointer;
+
+        strcpy(server_response,(pong->client_pointer[0])->username);
+        strcat(server_response," has disconnected\n");
+
+        history_lock();
+        addtolist(list,NULL, server_response,1);
+        history_unlock();
+
+        while(c!=NULL){
+
+
+            rc = udp_socket_write(sd, &(c->addr), server_response, BUFFER_SIZE);
+        
+            
+
+
+
+            c = c->next;
+
+        }
+
+
+        
+        
+        
+
         
         client* tmp = (pong->client_pointer[0]);
 
