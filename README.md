@@ -1,79 +1,113 @@
 Multithreaded Chat Application
-README
-Authors
 
-Morris Griffin – 02616740
+A fully concurrent client–server chat system implemented in C using UDP sockets, POSIX threads, custom reader/writer synchronization, and an ncurses-based UI.
+The project also features extended functionality including message history replay, inactive-client removal, and a lightweight reliability layer.
 
-Louis Canning – 02572277
+🚀 Features
+Client
 
-Overview
+UDP socket binding with unique ports
 
-This project implements a multithreaded client–server chat application using UDP sockets, POSIX threads, custom synchronization, and extended features such as history replay and inactive-client removal. The application also includes an ncurses-based user interface.
+Admin port: 6666
 
-Core Implementations
-Client-Side Implementation
+Two-thread model:
 
-UDP socket binding (unique ports + admin port 6666)
+client_speak (sending messages)
 
-Threading model with sender and listener threads
+client_listen (receiving messages)
 
-All 8 request types implemented (conn, say, sayto, mute, unmute, rename, disconn, kick)
+Implements all 8 request types:
+conn, say, sayto, mute, unmute, rename, disconn, kick
 
-Session key authentication
+Session key authentication (added security)
 
-ncurses-based UI with split chat/input windows
+Ncurses interface with split chat + input panels
 
-Server-Side Implementation
+Server
 
-Server binds to port 12000
+Binds to port 12000
 
-Listener thread dispatches requests to handler threads
+Listener thread dispatches every request to a dedicated worker thread
 
-Linked list storing IP, port, username, timestamps
+Maintains client list using a linked list (IP, port, username, timestamps)
 
-All 8 request types processed in response_thread()
+All 8 request types handled in response_thread()
 
-Thread-per-request model using pthread_create and pthread_detach
+Thread-per-request model using pthread_create() + pthread_detach()
 
-Synchronization
+🔒 Synchronization System
 
-Custom reader–writer locks using semaphores
+Custom reader/writer lock implementation using semaphores:
 
-Writer priority mechanism to prevent starvation
+Writer priority to prevent starvation
 
-Read locks for lookups/broadcasts
+Read locks for:
 
-Write locks for data modification
+Lookups
 
-Separate locks for client list, history, and heaps
+Broadcast operations
 
-Proposed Extensions
-PE 1: Message History at Connection
+Write locks for:
 
-Circular buffer of last 15 messages
+Client list modifications
 
-Thread-safe history locking
+History updates
 
-Sent to new clients upon connection
+Heap operations
 
-Updated on broadcasts and announcements
+Separate lock types for:
 
-PE 2: Remove Inactive Clients
+Client list
 
-Min-heap tracking clients by last active time
+Message history
 
-Ping after 30 seconds of inactivity
+Inactivity heaps
 
-Clients moved to “pong heap” awaiting ret-ping
+🧩 Project Extensions
+PE 1 — Message History on Connection
 
-Auto-removal after 5 seconds without response
+Circular buffer storing the last 15 messages
 
-Heap operations include add_to_heap, move_down, remove_from_heap
+Thread-safe access with history_lock() / history_unlock()
 
-Further Enhancements
+Automatically sent to new clients when they connect
 
-Reliable communication layer using acknowledgments.
+Updated on:
 
-Known Issues
+Broadcast messages
 
-Communication over LAN was problematic due to WSL IP address differences. WSL’s assigned IP does not match the device’s actual network interface, making local-network testing impractical.
+Server announcements
+
+PE 2 — Automatic Removal of Inactive Clients
+
+Min-heap tracks clients by last_active_time
+
+Server sends $ping$ after 30 seconds of silence
+
+Clients moved to a "pong heap" while awaiting ret-ping$
+
+Auto-removal after 5 seconds with no response
+
+Heap operations implemented:
+
+add_to_heap()
+
+move_down()
+
+remove_from_heap()
+
+⚙️ Additional Enhancements
+
+Lightweight reliability layer using ACKs
+→ Helps compensate for UDP’s lack of reliability
+
+🧠 Known Issues & Development Challenges
+
+Due to the use of WSL, the virtual network interface created by WSL does not share the same IP as the host device.
+This caused major issues when attempting LAN communication between devices, and TAs confirmed that WSL makes this setup impractical.
+
+👥 Authors
+
+Morris Griffin — 02616740
+
+Louis Canning — 02572277
